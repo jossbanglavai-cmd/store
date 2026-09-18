@@ -1,0 +1,6 @@
+{
+  "name": "Amar Store",
+  "description": "Fully responsive gaming top-up, digital accounts, and subscription store with bKash and Nagad payment support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

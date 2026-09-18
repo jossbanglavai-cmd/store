@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'Teko', 'Hind Siliguri', sans-serif;
+    --font-body: 'Hind Siliguri', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-body);
+  }
+}
+
+.font-heading {
+  font-family: 'Teko', 'Hind Siliguri', sans-serif;
+  letter-spacing: 0.5px;
+}
