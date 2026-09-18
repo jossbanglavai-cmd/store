@@ -49,34 +49,34 @@ export const Navbar: React.FC<Props> = ({
         <nav className="hidden md:flex items-center gap-2 bg-gray-100/90 p-1.5 rounded-2xl border border-gray-200/60">
           <button
             onClick={() => setActiveTab('home')}
-            className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[68px] ${
+            className={`px-3.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[68px] ${
               activeTab === 'home' 
                 ? 'bg-white text-black shadow-xs font-bold' 
-                : 'text-gray-500 hover:text-black hover:bg-white/60'
+                : 'text-gray-500 hover:text-black hover:bg-white/60 font-semibold'
             }`}
           >
             <Store className={`w-5 h-5 mb-0.5 ${activeTab === 'home' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
-            <span className="text-[11px] font-semibold leading-tight">স্টোর</span>
+            <span className="text-[11px] leading-tight">স্টোর</span>
           </button>
 
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[68px] ${
+            className={`px-3.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[68px] ${
               activeTab === 'orders' 
                 ? 'bg-white text-black shadow-xs font-bold' 
-                : 'text-gray-500 hover:text-black hover:bg-white/60'
+                : 'text-gray-500 hover:text-black hover:bg-white/60 font-semibold'
             }`}
           >
             <Package className={`w-5 h-5 mb-0.5 ${activeTab === 'orders' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
-            <span className="text-[11px] font-semibold leading-tight">অর্ডার</span>
+            <span className="text-[11px] leading-tight">অর্ডার</span>
           </button>
 
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[68px] relative ${
+            className={`px-3.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[68px] relative ${
               activeTab === 'reviews' 
                 ? 'bg-white text-black shadow-xs font-bold' 
-                : 'text-gray-500 hover:text-black hover:bg-white/60'
+                : 'text-gray-500 hover:text-black hover:bg-white/60 font-semibold'
             }`}
           >
             <div className="relative">
@@ -87,7 +87,7 @@ export const Navbar: React.FC<Props> = ({
                 </span>
               )}
             </div>
-            <span className="text-[11px] font-semibold leading-tight">রিভিউ</span>
+            <span className="text-[11px] leading-tight">রিভিউ</span>
           </button>
         </nav>
 

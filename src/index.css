@@ -6,6 +6,11 @@
     --font-body: 'Hind Siliguri', sans-serif;
   }
 
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
   body {
     font-family: var(--font-body);
   }
@@ -15,3 +20,4 @@
   font-family: 'Teko', 'Hind Siliguri', sans-serif;
   letter-spacing: 0.5px;
 }
+
