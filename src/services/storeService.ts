@@ -1,10 +1,59 @@
-import { AppSettings, Category, Order, Review } from '../types';
+import { AppSettings, Category, Order, Review, UserProfile } from '../types';
 import { FALLBACK_CATEGORIES, FALLBACK_SETTINGS } from '../data/fallbackData';
 
 const FIREBASE_CONFIG = {
   projectId: "dshop-46653",
   apiKey: "AIzaSyAuFb9Ed8KgqxdzoT0ZZXCMYFpCzOkNfG4",
 };
+
+const USER_PROFILE_KEY = 'amar_store_user_profile';
+
+export const DEFAULT_USER: UserProfile = {
+  name: "",
+  phone: "",
+  email: "",
+  isLoggedIn: false,
+  memberId: "",
+  joinDate: ""
+};
+
+export function getUserProfile(): UserProfile {
+  try {
+    const raw = localStorage.getItem(USER_PROFILE_KEY);
+    if (!raw) {
+      return DEFAULT_USER;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.isLoggedIn) {
+      return DEFAULT_USER;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_USER;
+  }
+}
+
+export function saveUserProfile(user: UserProfile): void {
+  try {
+    localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(user));
+  } catch (err) {
+    console.error("Error saving user profile", err);
+  }
+}
+
+export function logoutUser(): UserProfile {
+  const guest: UserProfile = {
+    name: "",
+    phone: "",
+    email: "",
+    isLoggedIn: false,
+    memberId: "",
+    joinDate: ""
+  };
+  saveUserProfile(guest);
+  return guest;
+}
+
 
 const DEFAULT_REVIEWS: Review[] = [
   {

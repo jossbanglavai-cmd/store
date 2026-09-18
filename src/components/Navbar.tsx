@@ -1,5 +1,6 @@
 import React from 'react';
-import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, Smartphone, Monitor, ShieldCheck, Star } from 'lucide-react';
+import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, Smartphone, Monitor, ShieldCheck, Star, LogIn } from 'lucide-react';
+import { UserProfile } from '../types';
 
 interface Props {
   logoUrl: string;
@@ -8,6 +9,8 @@ interface Props {
   setActiveTab: (tab: 'home' | 'orders' | 'reviews' | 'profile') => void;
   onOpenAddMoney: () => void;
   onOpenFixModal: () => void;
+  onOpenAuthModal?: (mode?: 'login' | 'register') => void;
+  user?: UserProfile;
   deviceMode: 'responsive' | 'mobile-mock';
   setDeviceMode: (mode: 'responsive' | 'mobile-mock') => void;
   reviewsCount?: number;
@@ -21,6 +24,8 @@ export const Navbar: React.FC<Props> = ({
   setActiveTab,
   onOpenAddMoney,
   onOpenFixModal,
+  onOpenAuthModal,
+  user,
   deviceMode,
   setDeviceMode,
   reviewsCount = 6,
@@ -138,19 +143,30 @@ export const Navbar: React.FC<Props> = ({
             <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono hidden xs:inline">+ADD</span>
           </button>
 
-          {/* Profile Tab beside balance: identical styling as store/orders/reviews */}
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] border ${
-              activeTab === 'profile'
-                ? 'bg-white text-black border-gray-300/80 shadow-xs font-bold'
-                : 'bg-gray-100/90 text-gray-500 border-gray-200/60 hover:text-black hover:bg-white/60'
-            }`}
-            title="আমার প্রোফাইল দেখুন"
-          >
-            <User className={`w-5 h-5 mb-0.5 ${activeTab === 'profile' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
-            <span className="text-[11px] font-semibold leading-tight">প্রোফাইল</span>
-          </button>
+          {/* Profile or Login Tab beside balance */}
+          {user && !user.isLoggedIn ? (
+            <button
+              onClick={() => onOpenAuthModal ? onOpenAuthModal('login') : setActiveTab('profile')}
+              className="px-3 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] bg-black text-white hover:bg-neutral-800 shadow-xs cursor-pointer"
+              title="লগইন বা রেজিস্ট্রেশন করুন"
+            >
+              <LogIn className="w-4 h-4 mb-0.5 text-amber-400" />
+              <span className="text-[11px] font-bold leading-tight">লগইন</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] border ${
+                activeTab === 'profile'
+                  ? 'bg-white text-black border-gray-300/80 shadow-xs font-bold'
+                  : 'bg-gray-100/90 text-gray-500 border-gray-200/60 hover:text-black hover:bg-white/60'
+              }`}
+              title="আমার প্রোফাইল দেখুন"
+            >
+              <User className={`w-5 h-5 mb-0.5 ${activeTab === 'profile' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
+              <span className="text-[11px] font-semibold leading-tight">প্রোফাইল</span>
+            </button>
+          )}
 
         </div>
 

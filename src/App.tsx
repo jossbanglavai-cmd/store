@@ -12,7 +12,7 @@ import {
   Monitor,
   Flame
 } from 'lucide-react';
-import { Category, Product, AppSettings, Order, Review } from './types';
+import { Category, Product, AppSettings, Order, Review, UserProfile } from './types';
 import { FALLBACK_CATEGORIES, FALLBACK_SETTINGS } from './data/fallbackData';
 import { 
   fetchLiveSettings, 
@@ -22,7 +22,10 @@ import {
   getLocalOrders, 
   saveLocalOrder, 
   getWalletBalance, 
-  updateWalletBalance 
+  updateWalletBalance,
+  getUserProfile,
+  saveUserProfile,
+  logoutUser
 } from './services/storeService';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -34,6 +37,7 @@ import { ProfileView } from './components/ProfileView';
 import { ReviewsView } from './components/ReviewsView';
 import { ResponsiveFixModal } from './components/ResponsiveFixModal';
 import { BottomNav } from './components/BottomNav';
+import { AuthModal } from './components/AuthModal';
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
@@ -45,9 +49,14 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isFixModalOpen, setIsFixModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   
+  // User Profile
+  const [user, setUser] = useState<UserProfile>(() => getUserProfile());
+
   // Wallet & Orders
   const [balance, setBalance] = useState<number>(() => getWalletBalance());
   const [orders, setOrders] = useState<Order[]>(() => getLocalOrders());
@@ -109,6 +118,23 @@ export default function App() {
     showToast(`৳${amount} টাকা যোগের রিকুয়েস্ট সফল হয়েছে! নতুন ব্যালেন্স: ৳${updated}`);
   };
 
+  const handleOpenAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleLoginSuccess = (loggedInUser: UserProfile) => {
+    saveUserProfile(loggedInUser);
+    setUser(loggedInUser);
+    showToast(`স্বাগতম, ${loggedInUser.name}! সফলভাবে লগইন হয়েছে।`);
+  };
+
+  const handleLogout = () => {
+    const guest = logoutUser();
+    setUser(guest);
+    showToast("সফলভাবে লগআউট করা হয়েছে।");
+  };
+
   // Filtered categories and products
   const filteredCategories = categories.map(cat => {
     const prods = cat.products.filter(p => {
@@ -158,6 +184,8 @@ export default function App() {
           setActiveTab={setActiveTab}
           onOpenAddMoney={() => setIsAddMoneyOpen(true)}
           onOpenFixModal={() => setIsFixModalOpen(true)}
+          onOpenAuthModal={handleOpenAuthModal}
+          user={user}
           deviceMode={deviceMode}
           setDeviceMode={setDeviceMode}
           reviewsCount={reviews.length}
@@ -356,6 +384,8 @@ export default function App() {
           {activeTab === 'orders' && (
             <OrdersView
               orders={orders}
+              user={user}
+              onOpenAuthModal={handleOpenAuthModal}
               onBackToHome={() => setActiveTab('home')}
             />
           )}
@@ -375,8 +405,11 @@ export default function App() {
             <ProfileView
               balance={balance}
               orders={orders}
+              user={user}
               onOpenAddMoney={() => setIsAddMoneyOpen(true)}
               onOpenFixModal={() => setIsFixModalOpen(true)}
+              onOpenAuthModal={handleOpenAuthModal}
+              onLogout={handleLogout}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           )}
@@ -396,6 +429,8 @@ export default function App() {
           onClose={() => setSelectedProduct(null)}
           settings={settings}
           userBalance={balance}
+          user={user}
+          onRequireLogin={() => handleOpenAuthModal('login')}
           onOrderPlaced={handleOrderPlaced}
           onViewReviews={() => setActiveTab('reviews')}
         />
@@ -404,12 +439,22 @@ export default function App() {
           isOpen={isAddMoneyOpen}
           onClose={() => setIsAddMoneyOpen(false)}
           settings={settings}
+          user={user}
+          onRequireLogin={() => handleOpenAuthModal('login')}
           onAddMoneySuccess={handleAddMoneySuccess}
         />
 
         <ResponsiveFixModal
           isOpen={isFixModalOpen}
           onClose={() => setIsFixModalOpen(false)}
+        />
+
+        {/* Authentication Modal (Login & Registration) */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
+          initialMode={authModalMode}
         />
 
       </div>

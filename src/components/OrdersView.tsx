@@ -1,13 +1,15 @@
 import React from 'react';
-import { Package, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
-import { Order } from '../types';
+import { Package, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, ArrowLeft, LogIn } from 'lucide-react';
+import { Order, UserProfile } from '../types';
 
 interface Props {
   orders: Order[];
+  user?: UserProfile;
+  onOpenAuthModal?: (mode?: 'login' | 'register') => void;
   onBackToHome: () => void;
 }
 
-export const OrdersView: React.FC<Props> = ({ orders, onBackToHome }) => {
+export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onBackToHome }) => {
   return (
     <div className="max-w-2xl mx-auto w-full space-y-4">
       
@@ -22,14 +24,39 @@ export const OrdersView: React.FC<Props> = ({ orders, onBackToHome }) => {
         </div>
         <button
           onClick={onBackToHome}
-          className="text-xs font-semibold text-black hover:underline flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg"
+          className="text-xs font-semibold text-black hover:underline flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           দোকানে ফিরুন
         </button>
       </div>
 
-      {orders.length === 0 ? (
+      {user && !user.isLoggedIn ? (
+        <div className="bg-white rounded-2xl p-8 sm:p-12 text-center border border-gray-200 shadow-xs flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 mb-3">
+            <LogIn className="w-8 h-8" />
+          </div>
+          <h3 className="font-bold text-gray-800 text-base mb-1">লগইন করা নেই</h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-4">
+            আপনার আগের ও বর্তমান সব অর্ডার দেখতে আপনার জিমেইল দিয়ে লগইন করুন। গেস্ট একাউন্টে কোনো অর্ডার সংরক্ষিত থাকে না।
+          </p>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => onOpenAuthModal ? onOpenAuthModal('login') : null}
+              className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <LogIn className="w-3.5 h-3.5 text-amber-400" />
+              <span>লগইন করুন</span>
+            </button>
+            <button
+              onClick={() => onOpenAuthModal ? onOpenAuthModal('register') : null}
+              className="px-5 py-2.5 border border-gray-300 hover:bg-gray-100 text-black text-xs font-bold rounded-xl cursor-pointer"
+            >
+              অ্যাকাউন্ট তৈরি করুন
+            </button>
+          </div>
+        </div>
+      ) : orders.length === 0 ? (
         <div className="bg-white rounded-2xl p-10 sm:p-14 text-center border border-gray-200 shadow-xs flex flex-col items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
             <ShoppingBag className="w-8 h-8 text-gray-500" />
@@ -40,7 +67,7 @@ export const OrdersView: React.FC<Props> = ({ orders, onBackToHome }) => {
           </p>
           <button
             onClick={onBackToHome}
-            className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs"
+            className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
           >
             প্রোডাক্ট দেখুন ও অর্ডার করুন
           </button>

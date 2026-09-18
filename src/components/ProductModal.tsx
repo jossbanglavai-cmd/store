@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, Check, Copy, AlertCircle, ShieldCheck, Wallet, ArrowRight, Zap } from 'lucide-react';
-import { Product, Package, AppSettings, Order } from '../types';
+import { X, Check, Copy, AlertCircle, ShieldCheck, Wallet, ArrowRight, Zap, LogIn } from 'lucide-react';
+import { Product, Package, AppSettings, Order, UserProfile } from '../types';
 
 interface Props {
   product: Product | null;
   onClose: () => void;
   settings: AppSettings;
   userBalance: number;
+  user: UserProfile;
+  onRequireLogin: () => void;
   onOrderPlaced: (order: Order, newBalance?: number) => void;
   onViewReviews?: () => void;
 }
@@ -16,6 +18,8 @@ export const ProductModal: React.FC<Props> = ({
   onClose,
   settings,
   userBalance,
+  user,
+  onRequireLogin,
   onOrderPlaced,
   onViewReviews,
 }) => {
@@ -46,6 +50,12 @@ export const ProductModal: React.FC<Props> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    // Guest users CANNOT place order - must log in or create account with Gmail
+    if (!user.isLoggedIn) {
+      onRequireLogin();
+      return;
+    }
 
     if (!playerInfo.trim()) {
       setErrorMsg(product.inputLabel ? `${product.inputLabel} পূরণ করুন` : 'প্রয়োজনীয় তথ্য প্রদান করুন');
@@ -377,6 +387,11 @@ export const ProductModal: React.FC<Props> = ({
           >
             {isSubmitting ? (
               <span>প্রসেসিং হচ্ছে...</span>
+            ) : !user.isLoggedIn ? (
+              <>
+                <LogIn className="w-4 h-4 text-amber-400" />
+                <span>অর্ডার করতে লগইন বা অ্যাকাউন্ট তৈরি করুন (৳{selectedPkg.price})</span>
+              </>
             ) : (
               <>
                 <span>অর্ডার নিশ্চিত করুন (Pay ৳{selectedPkg.price})</span>

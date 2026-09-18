@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Wallet, AlertCircle, ArrowRight } from 'lucide-react';
-import { AppSettings } from '../types';
+import { X, Copy, Check, Wallet, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
+import { AppSettings, UserProfile } from '../types';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   settings: AppSettings;
+  user: UserProfile;
+  onRequireLogin: () => void;
   onAddMoneySuccess: (amount: number) => void;
 }
 
@@ -13,6 +15,8 @@ export const AddMoneyModal: React.FC<Props> = ({
   isOpen,
   onClose,
   settings,
+  user,
+  onRequireLogin,
   onAddMoneySuccess,
 }) => {
   if (!isOpen) return null;
@@ -39,6 +43,12 @@ export const AddMoneyModal: React.FC<Props> = ({
     e.preventDefault();
     setErrorMsg('');
 
+    // Guest users cannot add money without login
+    if (!user.isLoggedIn) {
+      onRequireLogin();
+      return;
+    }
+
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       setErrorMsg('সঠিক টাকার পরিমাণ লিখুন (কমপক্ষে ১০ টাকা)');
@@ -60,6 +70,7 @@ export const AddMoneyModal: React.FC<Props> = ({
       onClose();
     }, 700);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -209,6 +220,11 @@ export const AddMoneyModal: React.FC<Props> = ({
           >
             {isSubmitting ? (
               <span>যাচাই করা হচ্ছে...</span>
+            ) : !user.isLoggedIn ? (
+              <>
+                <LogIn className="w-4 h-4 text-amber-400" />
+                <span>টাকা যোগ করতে লগইন বা অ্যাকাউন্ট তৈরি করুন</span>
+              </>
             ) : (
               <>
                 <span>টাকা যোগের অনুরোধ পাঠান</span>

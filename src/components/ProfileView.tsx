@@ -1,58 +1,103 @@
 import React from 'react';
-import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight } from 'lucide-react';
-import { Order } from '../types';
+import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Order, UserProfile } from '../types';
 
 interface Props {
   balance: number;
   orders: Order[];
+  user: UserProfile;
   onOpenAddMoney: () => void;
   onOpenFixModal: () => void;
+  onOpenAuthModal: (mode?: 'login' | 'register') => void;
+  onLogout: () => void;
   onNavigateTab?: (tab: 'home' | 'orders' | 'reviews') => void;
 }
 
 export const ProfileView: React.FC<Props> = ({
   balance,
   orders,
+  user,
   onOpenAddMoney,
   onOpenFixModal,
+  onOpenAuthModal,
+  onLogout,
   onNavigateTab,
 }) => {
   const completedOrders = orders.filter(o => o.status === 'Success').length;
   const totalSpent = orders.reduce((sum, o) => sum + (o.status === 'Success' ? o.price : 0), 0);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 animate-in fade-in duration-200">
+    <div className="max-w-2xl mx-auto space-y-5">
       
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-2xl border-4 border-gray-100 shadow-sm">
-            AS
+          <div className="w-20 h-20 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-2xl border-4 border-gray-100 shadow-sm uppercase">
+            {user.isLoggedIn ? user.name.slice(0, 2) : "GU"}
           </div>
-          <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white" title="Verified Customer">
-            <ShieldCheck className="w-3.5 h-3.5" />
-          </div>
+          {user.isLoggedIn && (
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white" title="Verified Customer">
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </div>
+          )}
         </div>
 
         <div className="flex-1 space-y-1">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center justify-center sm:justify-start gap-2">
-            <User className="w-5 h-5 text-gray-700" />
-            <span>Amar Store গ্রাহক প্রোফাইল</span>
-          </h2>
-          <p className="text-xs text-gray-500">আইডি: BD-984201 | মেম্বারশিপ: প্রিমিয়াম ইউজার</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center justify-center sm:justify-start gap-2">
+              <User className="w-5 h-5 text-gray-700" />
+              <span>{user.isLoggedIn ? user.name : "গেস্ট ব্যবহারকারী"}</span>
+            </h2>
+
+            {user.isLoggedIn ? (
+              <button
+                onClick={onLogout}
+                className="px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition flex items-center justify-center gap-1.5 self-center sm:self-auto cursor-pointer"
+                title="অ্যাকাউন্ট থেকে লগআউট করুন"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>লগআউট (Logout)</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                <button
+                  onClick={() => onOpenAuthModal('login')}
+                  className="px-4 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                  <span>লগইন করুন (Gmail Login)</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-500">
+            {user.isLoggedIn 
+              ? `আইডি: ${user.memberId} | ইমেইল: ${user.email}` 
+              : 'গেস্ট ব্যবহারকারীদের কোনো অর্ডার বা ব্যালেন্স যুক্ত হবে না। অর্ডার ও টাকা যোগ করতে লগইন করুন।'}
+          </p>
+
           <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
-            <span className="bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Active Account
-            </span>
-            <span className="bg-gray-100 text-gray-600 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-              bKash / Nagad Verified
-            </span>
+            {user.isLoggedIn ? (
+              <>
+                <span className="bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  Gmail Verified Account
+                </span>
+                <span className="bg-gray-100 text-gray-600 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
+                  bKash / Nagad Ready
+                </span>
+              </>
+            ) : (
+              <span className="bg-rose-50 text-rose-700 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-rose-200">
+                লগইন করা নেই (লগইন করা বাধ্যতামূলক)
+              </span>
+            )}
           </div>
         </div>
 
         <button
           onClick={onOpenAddMoney}
-          className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5"
+          className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
         >
           <Wallet className="w-3.5 h-3.5 text-emerald-400" />
           টাকা যোগ করুন

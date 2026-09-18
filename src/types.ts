@@ -69,3 +69,12 @@ export interface Review {
   timestamp?: string;
   dateFormatted?: string;
 }
+
+export interface UserProfile {
+  name: string;
+  phone: string;
+  email: string;
+  isLoggedIn: boolean;
+  memberId: string;
+  joinDate?: string;
+}
