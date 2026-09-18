@@ -108,7 +108,7 @@ export default function App() {
   const handleAddReview = (newReview: Review) => {
     saveUserReview(newReview);
     setReviews(prev => [newReview, ...prev]);
-    showToast("আপনার রিভিউ জমা হয়েছে! ধন্যবাদ।");
+    showToast("আপনার রিভিউটি সফলভাবে জমা হয়েছে, ধন্যবাদ!");
   };
 
   const handleOrderPlaced = (newOrder: Order, newBalance?: number) => {
@@ -209,7 +209,7 @@ export default function App() {
           user={user}
           deviceMode={deviceMode}
           setDeviceMode={setDeviceMode}
-          reviewsCount={reviews.length}
+          reviewsCount={reviews.filter(r => r.status === 'Approved' || (!r.status) || r.status === 'approved').length}
           ordersCount={orders.length}
         />
 

@@ -61,6 +61,8 @@ export interface Order {
 export interface Review {
   id: string;
   userName: string;
+  userEmail?: string;
+  memberId?: string;
   userPhoto?: string;
   productName: string;
   rating: number;

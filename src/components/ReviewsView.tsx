@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Star, 
   Sparkles, 
@@ -8,12 +8,16 @@ import {
   Plus, 
   X, 
   Check, 
-  Filter,
-  ArrowLeft,
-  UserCheck,
-  LogIn
+  Filter, 
+  ArrowLeft, 
+  UserCheck, 
+  LogIn, 
+  Clock, 
+  User,
+  AlertCircle
 } from 'lucide-react';
 import { Review, UserProfile } from '../types';
+import { getLocalAddedReviews } from '../services/storeService';
 
 interface Props {
   reviews: Review[];
@@ -37,25 +41,68 @@ export const ReviewsView: React.FC<Props> = ({
   const [helpfulMap, setHelpfulMap] = useState<Record<string, boolean>>({});
 
   // Write review form state
-  const [userName, setUserName] = useState(user?.isLoggedIn ? user.name : '');
   const [productName, setProductName] = useState(productNames[0] || 'Netflix');
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successNotice, setSuccessNotice] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
-  const totalReviews = reviews.length;
+  // Filter public approved reviews only (Pending reviews require Admin Approval)
+  const approvedReviews = reviews.filter(
+    r => r.status === 'Approved' || r.status === 'approved'
+  );
+
+  const totalReviews = approvedReviews.length;
   const avgRating = totalReviews > 0 
-    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+    ? (approvedReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
     : "5.0";
 
-  const fiveStarCount = reviews.filter(r => r.rating === 5).length;
-  const fourStarCount = reviews.filter(r => r.rating === 4).length;
+  const fiveStarCount = approvedReviews.filter(r => r.rating === 5).length;
+  const fourStarCount = approvedReviews.filter(r => r.rating === 4).length;
 
-  const filteredReviews = reviews.filter(r => {
+  const filteredReviews = approvedReviews.filter(r => {
     if (filterRating === 'all') return true;
     return r.rating === filterRating;
   });
+
+  // Set of product names the current user has already reviewed (1 review per product rule)
+  const userReviewedProducts = useMemo(() => {
+    if (!user || !user.isLoggedIn) return new Set<string>();
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const userMemberId = (user.memberId || '').trim();
+
+    if (!userEmail && !userMemberId) return new Set<string>();
+
+    const localList = getLocalAddedReviews();
+    const allCombined = [...reviews, ...localList];
+
+    const reviewed = new Set<string>();
+    allCombined.forEach(r => {
+      // Ignore default system reviews that don't belong to a registered account
+      if (!r.userEmail && !r.memberId) return;
+
+      const rEmail = (r.userEmail || '').toLowerCase().trim();
+      const rMemberId = (r.memberId || '').trim();
+
+      const isMatch = 
+        (userEmail && rEmail && rEmail === userEmail) ||
+        (userMemberId && rMemberId && rMemberId === userMemberId);
+
+      if (isMatch && r.productName) {
+        reviewed.add(r.productName.trim().toLowerCase());
+      }
+    });
+
+    return reviewed;
+  }, [user, reviews]);
+
+  const availableProducts = useMemo(() => {
+    return productNames.filter(p => !userReviewedProducts.has(p.trim().toLowerCase()));
+  }, [productNames, userReviewedProducts]);
+
+  const isCurrentProductReviewed = userReviewedProducts.has(productName.trim().toLowerCase());
+  const allProductsReviewed = productNames.length > 0 && availableProducts.length === 0;
 
   const handleHelpful = (id: string) => {
     setHelpfulMap(prev => ({
@@ -71,7 +118,11 @@ export const ReviewsView: React.FC<Props> = ({
       }
       return;
     }
-    setUserName(user.name || user.email.split('@')[0]);
+    const nextProduct = availableProducts[0] || productNames[0] || 'Netflix';
+    setProductName(nextProduct);
+    setDuplicateError(null);
+    setComment('');
+    setRating(5);
     setIsWriteModalOpen(true);
   };
 
@@ -82,19 +133,29 @@ export const ReviewsView: React.FC<Props> = ({
       return;
     }
 
-    const finalName = (userName.trim() || user.name || user.email.split('@')[0]);
+    // Check 1 review per product constraint
+    if (userReviewedProducts.has(productName.trim().toLowerCase())) {
+      setDuplicateError(`আপনি ইতিমধ্যে "${productName}" পণ্যে রিভিউ জমা দিয়েছেন! প্রতিটি পণ্যে ১টি রিভিউ প্রযোজ্য।`);
+      return;
+    }
+
+    // Auto-bind logged in profile name without needing manual input
+    const finalName = user.name.trim() || user.email.split('@')[0];
     if (!finalName || !comment.trim()) return;
 
     setIsSubmitting(true);
     setTimeout(() => {
+      // Review is saved with 'Pending' status (admin approval required)
       const newReview: Review = {
         id: `rev-${Date.now()}`,
         userName: finalName,
+        userEmail: user.email,
+        memberId: user.memberId,
         userPhoto: user.photoUrl || "",
-        productName,
+        productName: productName.trim(),
         rating,
         comment: comment.trim(),
-        status: 'Approved',
+        status: 'Pending', // Pending admin approval
         dateFormatted: 'এইমাত্র'
       };
 
@@ -105,7 +166,7 @@ export const ReviewsView: React.FC<Props> = ({
         setSuccessNotice(false);
         setIsWriteModalOpen(false);
         setComment('');
-      }, 1500);
+      }, 2000);
     }, 600);
   };
 
@@ -379,100 +440,148 @@ export const ReviewsView: React.FC<Props> = ({
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleWriteSubmit} className="p-5 space-y-4 text-sm">
-              
-              {successNotice && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>ধন্যবাদ! আপনার মূল্যবান রিভিউটি সফলভাবে গ্রহণ করা হয়েছে।</span>
+            {/* Form / Content */}
+            {allProductsReviewed ? (
+              <div className="p-6 text-center space-y-4">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <Check className="w-7 h-7" />
                 </div>
-              )}
-
-              {/* Star Rating selector */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  রেটিং নির্বাচন করুন (Rating)
-                </label>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className="p-1 hover:scale-110 transition"
-                    >
-                      <Star
-                        className={`w-7 h-7 ${
-                          star <= rating
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'fill-gray-200 text-gray-300'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <span className="text-sm font-bold text-gray-800 ml-2">
-                    {rating} স্টার
-                  </span>
+                <div>
+                  <h4 className="text-base font-bold text-gray-900">সকল পণ্যের রিভিউ সম্পন্ন হয়েছে!</h4>
+                  <p className="text-xs text-gray-600 mt-1 max-w-sm mx-auto">
+                    আপনি ইতিমধ্যে প্রতিটি পণ্যের জন্য রিভিউ প্রদান করেছেন। একজন গ্রাহক প্রতিটি পণ্যে ১টি রিভিউ দিতে পারেন। আপনার ইতিবাচক সাপোর্টের জন্য আন্তরিক ধন্যবাদ!
+                  </p>
                 </div>
-              </div>
-
-              {/* User name */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  আপনার নাম (Your Name)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="e.g. তানভীর হাসান"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm"
-                />
-              </div>
-
-              {/* Product select */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  কোন পণ্যের রিভিউ (Product)
-                </label>
-                <select
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm bg-white"
+                <button
+                  type="button"
+                  onClick={() => setIsWriteModalOpen(false)}
+                  className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold uppercase cursor-pointer transition"
                 >
-                  {productNames.map((name, i) => (
-                    <option key={i} value={name}>{name}</option>
-                  ))}
-                </select>
+                  বন্ধ করুন
+                </button>
               </div>
+            ) : (
+              <form onSubmit={handleWriteSubmit} className="p-5 space-y-4 text-sm">
+                
+                {successNotice && (
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span className="font-bold text-xs">আপনার রিভিউটি সফলভাবে জমা হয়েছে, ধন্যবাদ!</span>
+                  </div>
+                )}
 
-              {/* Comment */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                  আপনার অভিজ্ঞতা ও মন্তব্য (Comment)
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="ডেলিভারি স্পিড কেমন লেগেছে, সার্ভিস কেমন পেয়েছেন লিখুন..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm resize-none"
-                />
-              </div>
+                {duplicateError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <span>{duplicateError}</span>
+                  </div>
+                )}
 
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isSubmitting || successNotice}
-                className="w-full py-3 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting ? 'জমা হচ্ছে...' : 'রিভিউ পাবলিশ করুন'}
-              </button>
+                {/* Auto-Bound User Profile Info */}
+                {user?.isLoggedIn && (
+                  <div className="bg-neutral-50 border border-gray-200 rounded-xl p-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm overflow-hidden border border-gray-200">
+                      {user.photoUrl ? (
+                        <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{user.name.slice(0, 2) || "AS"}</span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                        <span>{user.name}</span>
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        আইডি: {user.memberId}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            </form>
+                {/* Star Rating selector */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                    রেটিং নির্বাচন করুন (Rating)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className="p-1 hover:scale-110 transition cursor-pointer"
+                      >
+                        <Star
+                          className={`w-7 h-7 ${
+                            star <= rating
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'fill-gray-200 text-gray-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-sm font-bold text-gray-800 ml-2">
+                      {rating} স্টার
+                    </span>
+                  </div>
+                </div>
+
+                {/* Product select */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                    কোন পণ্যের রিভিউ (Product)
+                  </label>
+                  <select
+                    value={productName}
+                    onChange={(e) => {
+                      setProductName(e.target.value);
+                      setDuplicateError(null);
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm bg-white"
+                  >
+                    {productNames.map((name, i) => {
+                      const isAlready = userReviewedProducts.has(name.trim().toLowerCase());
+                      return (
+                        <option key={i} value={name} disabled={isAlready}>
+                          {name} {isAlready ? '(ইতিমধ্যে রিভিউ দেওয়া হয়েছে)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  {isCurrentProductReviewed && (
+                    <p className="text-[11px] text-red-600 font-medium mt-1">
+                      * আপনি ইতিমধ্যে এই পণ্যে রিভিউ দিয়েছেন। অন্য পণ্য নির্বাচন করুন।
+                    </p>
+                  )}
+                </div>
+
+                {/* Comment */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                    আপনার অভিজ্ঞতা ও মন্তব্য (Comment)
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="ডেলিভারি স্পিড কেমন লেগেছে, সার্ভিস কেমন পেয়েছেন লিখুন..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm resize-none"
+                  />
+                </div>
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || successNotice || isCurrentProductReviewed}
+                  className="w-full py-3 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'জমা হচ্ছে...' : 'রিভিউ সাবমিট করুন'}
+                </button>
+
+              </form>
+            )}
 
           </div>
         </div>

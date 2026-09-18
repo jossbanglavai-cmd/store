@@ -555,19 +555,7 @@ export async function fetchLiveReviews(): Promise<Review[]> {
       };
     }).filter((r: Review) => r.comment);
 
-    // Merge with any locally added reviews by this user
-    const local = getLocalAddedReviews();
-    const combined = [...local, ...remoteReviews];
-
-    // Deduplicate by id
-    const seen = new Set();
-    const unique = combined.filter(item => {
-      if (seen.has(item.id)) return false;
-      seen.add(item.id);
-      return true;
-    });
-
-    return unique.length > 0 ? unique : DEFAULT_REVIEWS;
+    return remoteReviews.length > 0 ? remoteReviews : DEFAULT_REVIEWS;
   } catch (err) {
     console.warn("Failed to fetch live reviews from Firestore, using fallback", err);
     return getStoredReviews();
@@ -575,11 +563,11 @@ export async function fetchLiveReviews(): Promise<Review[]> {
 }
 
 function getStoredReviews(): Review[] {
-  const local = getLocalAddedReviews();
-  return [...local, ...DEFAULT_REVIEWS];
+  const local = getLocalAddedReviews().filter(r => r.status === 'Approved' || r.status === 'approved');
+  return local.length > 0 ? [...local, ...DEFAULT_REVIEWS] : DEFAULT_REVIEWS;
 }
 
-function getLocalAddedReviews(): Review[] {
+export function getLocalAddedReviews(): Review[] {
   try {
     const raw = localStorage.getItem(REVIEWS_KEY);
     return raw ? JSON.parse(raw) : [];
