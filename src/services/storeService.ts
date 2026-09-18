@@ -1,5 +1,12 @@
 import { AppSettings, Category, Order, Review, UserProfile } from '../types';
 import { FALLBACK_CATEGORIES, FALLBACK_SETTINGS } from '../data/fallbackData';
+import { auth } from '../firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  updateProfile,
+  signOut
+} from 'firebase/auth';
 
 const FIREBASE_CONFIG = {
   projectId: "dshop-46653",
@@ -7,6 +14,15 @@ const FIREBASE_CONFIG = {
 };
 
 const USER_PROFILE_KEY = 'amar_store_user_profile';
+const ACCOUNTS_REGISTRY_KEY = 'amar_store_registered_accounts';
+
+export interface RegisteredAccount {
+  email: string;
+  password: string;
+  name: string;
+  memberId: string;
+  createdAt: string;
+}
 
 export const DEFAULT_USER: UserProfile = {
   name: "",
@@ -16,6 +32,154 @@ export const DEFAULT_USER: UserProfile = {
   memberId: "",
   joinDate: ""
 };
+
+// Registered Accounts Registry Management
+export function getRegisteredAccounts(): Record<string, RegisteredAccount> {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_REGISTRY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveRegisteredAccounts(accounts: Record<string, RegisteredAccount>): void {
+  try {
+    localStorage.setItem(ACCOUNTS_REGISTRY_KEY, JSON.stringify(accounts));
+  } catch (err) {
+    console.error("Error saving accounts registry", err);
+  }
+}
+
+// Register a brand new account
+export async function registerAccount(emailInput: string, passwordInput: string, nameInput: string): Promise<UserProfile> {
+  const email = emailInput.trim().toLowerCase();
+  const password = passwordInput.trim();
+  const name = nameInput.trim() || email.split('@')[0];
+
+  if (!email) {
+    throw new Error("অনুগ্রহ করে আপনার সঠিক ইমেইল (Email) প্রদান করুন।");
+  }
+  if (!password || password.length < 6) {
+    throw new Error("পাসওয়ার্ড ন্যূনতম ৬ অক্ষরের হতে হবে।");
+  }
+
+  // 1. Check if email is already registered in accounts registry
+  const accounts = getRegisteredAccounts();
+  if (accounts[email]) {
+    throw new Error("এই ইমেইলে ইতিমধ্যে একটি অ্যাকাউন্ট তৈরি করা আছে! অনুগ্রহ করে 'লগইন করুন' বাটনে যান।");
+  }
+
+  // 2. Try Firebase Auth create user if available
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, { displayName: name }).catch(() => {});
+    }
+  } catch (fbErr: any) {
+    console.warn("Firebase create user notice:", fbErr?.code || fbErr?.message);
+    if (fbErr?.code === 'auth/email-already-in-use') {
+      throw new Error("এই ইমেইল দিয়ে Firebase-এ আগেই অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে সঠিক পাসওয়ার্ড দিয়ে লগইন করুন।");
+    }
+  }
+
+  // 3. Save to local account registry
+  const memberId = "AS-" + Math.floor(100000 + Math.random() * 900000);
+  const newAccount: RegisteredAccount = {
+    email,
+    password,
+    name,
+    memberId,
+    createdAt: new Date().toISOString()
+  };
+
+  accounts[email] = newAccount;
+  saveRegisteredAccounts(accounts);
+
+  // Initialize fresh wallet and orders for this user
+  updateWalletBalance(0, email);
+
+  const profile: UserProfile = {
+    name,
+    email,
+    phone: "",
+    isLoggedIn: true,
+    memberId,
+    joinDate: "আজ"
+  };
+
+  saveUserProfile(profile);
+  return profile;
+}
+
+// Strict Login with verified credentials matching
+export async function loginAccount(emailInput: string, passwordInput: string): Promise<UserProfile> {
+  const email = emailInput.trim().toLowerCase();
+  const password = passwordInput.trim();
+
+  if (!email) {
+    throw new Error("অনুগ্রহ করে আপনার ইমেইল প্রদান করুন।");
+  }
+  if (!password) {
+    throw new Error("অনুগ্রহ করে আপনার পাসওয়ার্ড প্রদান করুন।");
+  }
+
+  const accounts = getRegisteredAccounts();
+  const existingAccount = accounts[email];
+
+  // Try Firebase Auth sign in
+  let firebaseSuccess = false;
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      firebaseSuccess = true;
+    }
+  } catch (fbErr: any) {
+    console.warn("Firebase sign in notice:", fbErr?.code || fbErr?.message);
+    if (fbErr?.code === 'auth/wrong-password' || fbErr?.code === 'auth/invalid-credential') {
+      throw new Error("ভুল পাসওয়ার্ড! আপনার অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিয়ে আবার চেষ্টা করুন।");
+    }
+    if (fbErr?.code === 'auth/user-not-found' && !existingAccount) {
+      throw new Error("এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি! অনুগ্রহ করে প্রথমে 'রেজিস্ট্রেশন করুন' বাটনে ক্লিক করে অ্যাকাউন্ট খুলুন।");
+    }
+  }
+
+  // Validate with local registry
+  if (!existingAccount && !firebaseSuccess) {
+    throw new Error("এই ইমেইলে কোনো অ্যাকাউন্ট খোলা নেই! অনুগ্রহ করে প্রথমে নিচে 'রেজিস্ট্রেশন করুন' (Create Account) বাটনে ক্লিক করে আপনার অ্যাকাউন্ট খুলুন।");
+  }
+
+  if (existingAccount && existingAccount.password !== password && !firebaseSuccess) {
+    throw new Error("ভুল পাসওয়ার্ড! এই ইমেইলের জন্য আপনি যে পাসওয়ার্ড দিয়ে রেজিস্ট্রেশন করেছিলেন তা সঠিক নয়।");
+  }
+
+  const accountName = existingAccount?.name || auth.currentUser?.displayName || email.split('@')[0];
+  const memberId = existingAccount?.memberId || ("AS-" + Math.floor(100000 + Math.random() * 900000));
+
+  // If successfully logged in with Firebase but missing in local registry, sync it
+  if (!existingAccount) {
+    accounts[email] = {
+      email,
+      password,
+      name: accountName,
+      memberId,
+      createdAt: new Date().toISOString()
+    };
+    saveRegisteredAccounts(accounts);
+  }
+
+  const profile: UserProfile = {
+    name: accountName,
+    email,
+    phone: "",
+    isLoggedIn: true,
+    memberId,
+    joinDate: "সদস্য"
+  };
+
+  saveUserProfile(profile);
+  return profile;
+}
 
 export function getUserProfile(): UserProfile {
   try {
@@ -42,6 +206,10 @@ export function saveUserProfile(user: UserProfile): void {
 }
 
 export function logoutUser(): UserProfile {
+  try {
+    signOut(auth).catch(() => {});
+  } catch {}
+  
   const guest: UserProfile = {
     name: "",
     phone: "",
@@ -209,32 +377,20 @@ export async function fetchLiveCategories(): Promise<Category[]> {
   }
 }
 
-// Local state helpers for seamless user interaction
-const ORDERS_KEY = 'amar_store_orders';
-const BALANCE_KEY = 'amar_store_wallet_balance';
+// Per-account storage helpers
+function getStorageKeyForUser(baseKey: string, email?: string): string {
+  if (!email || !email.trim()) return `${baseKey}_guest`;
+  const cleanEmail = email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+  return `${baseKey}_${cleanEmail}`;
+}
 
-export function getLocalOrders(): Order[] {
+export function getLocalOrders(userEmail?: string): Order[] {
   try {
-    const raw = localStorage.getItem(ORDERS_KEY);
+    if (!userEmail) return [];
+    const key = getStorageKeyForUser('amar_store_orders', userEmail);
+    const raw = localStorage.getItem(key);
     if (!raw) {
-      // Seed a sample order so the user sees a realistic order list
-      const sample: Order[] = [
-        {
-          id: 'ORD-9842',
-          product: 'Crunchyroll',
-          package: '7 দিন 🔥',
-          price: 45,
-          playerInfo: 'demo_user@gmail.com',
-          status: 'Success',
-          method: 'bKash Direct',
-          trx: '9H3JK89LP2',
-          senderPhone: '01712345678',
-          timeString: new Date(Date.now() - 3600000 * 4).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          timestamp: Date.now() - 3600000 * 4
-        }
-      ];
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(sample));
-      return sample;
+      return [];
     }
     return JSON.parse(raw);
   } catch {
@@ -242,32 +398,37 @@ export function getLocalOrders(): Order[] {
   }
 }
 
-export function saveLocalOrder(order: Order): void {
+export function saveLocalOrder(order: Order, userEmail?: string): void {
   try {
-    const current = getLocalOrders();
+    if (!userEmail) return;
+    const key = getStorageKeyForUser('amar_store_orders', userEmail);
+    const current = getLocalOrders(userEmail);
     const updated = [order, ...current];
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch (err) {
     console.error("Error saving order", err);
   }
 }
 
-export function getWalletBalance(): number {
+export function getWalletBalance(userEmail?: string): number {
   try {
-    const raw = localStorage.getItem(BALANCE_KEY);
+    if (!userEmail) return 0;
+    const key = getStorageKeyForUser('amar_store_wallet_balance', userEmail);
+    const raw = localStorage.getItem(key);
     if (raw === null) {
-      localStorage.setItem(BALANCE_KEY, '250');
-      return 250;
+      return 0;
     }
     return Number(raw) || 0;
   } catch {
-    return 250;
+    return 0;
   }
 }
 
-export function updateWalletBalance(newBal: number): void {
+export function updateWalletBalance(newBal: number, userEmail?: string): void {
   try {
-    localStorage.setItem(BALANCE_KEY, String(Math.max(0, newBal)));
+    if (!userEmail) return;
+    const key = getStorageKeyForUser('amar_store_wallet_balance', userEmail);
+    localStorage.setItem(key, String(Math.max(0, newBal)));
   } catch (err) {
     console.error("Error updating balance", err);
   }

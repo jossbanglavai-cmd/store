@@ -22,7 +22,7 @@ export const AddMoneyModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const [method, setMethod] = useState<'bkash' | 'nagad'>('bkash');
-  const [amount, setAmount] = useState('200');
+  const [amount, setAmount] = useState('');
   const [senderPhone, setSenderPhone] = useState('');
   const [trxId, setTrxId] = useState('');
   const [copiedNum, setCopiedNum] = useState(false);

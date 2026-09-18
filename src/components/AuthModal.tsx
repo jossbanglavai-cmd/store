@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, LogIn, UserPlus, Mail, Lock, User, ShieldCheck } from 'lucide-react';
+import { X, LogIn, UserPlus, Mail, Lock, User, ShieldCheck, AlertCircle } from 'lucide-react';
 import { UserProfile } from '../types';
+import { registerAccount, loginAccount } from '../services/storeService';
 
 interface Props {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const AuthModal: React.FC<Props> = ({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Email validation helper
@@ -31,9 +33,10 @@ export const AuthModal: React.FC<Props> = ({
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
 
     if (!email.trim()) {
       setErrorMsg('আপনার জিমেইল বা ইমেইল অ্যাড্রেস লিখুন');
@@ -41,7 +44,7 @@ export const AuthModal: React.FC<Props> = ({
     }
 
     if (!isValidEmail(email)) {
-      setErrorMsg('সঠিক ইমেইল (যেমন: yourname@gmail.com) লিখুন');
+      setErrorMsg('সঠিক ইমেইল ফরম্যাট (যেমন: yourname@gmail.com) লিখুন');
       return;
     }
 
@@ -52,7 +55,7 @@ export const AuthModal: React.FC<Props> = ({
 
     if (mode === 'register') {
       if (!name.trim()) {
-        setErrorMsg('আপনার নাম লিখুন');
+        setErrorMsg('আপনার পুরো নাম লিখুন');
         return;
       }
       if (password !== confirmPassword) {
@@ -63,26 +66,28 @@ export const AuthModal: React.FC<Props> = ({
 
     setIsLoading(true);
 
-    // Save and log in with Gmail/Email only
-    setTimeout(() => {
+    try {
+      if (mode === 'register') {
+        const newUser = await registerAccount(email, password, name);
+        setSuccessMsg('অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
+        setTimeout(() => {
+          setIsLoading(false);
+          onLoginSuccess(newUser);
+          onClose();
+        }, 500);
+      } else {
+        const loggedInUser = await loginAccount(email, password);
+        setSuccessMsg('লগইন সফল হয়েছে!');
+        setTimeout(() => {
+          setIsLoading(false);
+          onLoginSuccess(loggedInUser);
+          onClose();
+        }, 400);
+      }
+    } catch (err: any) {
       setIsLoading(false);
-
-      const displayName = mode === 'register' 
-        ? name.trim() 
-        : (email.split('@')[0]);
-
-      const formattedUser: UserProfile = {
-        name: displayName,
-        phone: "",
-        email: email.trim().toLowerCase(),
-        isLoggedIn: true,
-        memberId: "AS-" + Math.floor(100000 + Math.random() * 900000),
-        joinDate: "আজ"
-      };
-
-      onLoginSuccess(formattedUser);
-      onClose();
-    }, 500);
+      setErrorMsg(err?.message || 'লগইন বা রেজিস্ট্রেশনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+    }
   };
 
   return (
@@ -100,7 +105,7 @@ export const AuthModal: React.FC<Props> = ({
                 {mode === 'login' ? 'লগইন করুন (Login)' : 'অ্যাকাউন্ট তৈরি করুন (Create Account)'}
               </h3>
               <p className="text-xs text-gray-300">
-                {mode === 'login' ? 'অর্ডার বা পেমেন্ট করতে প্রথমে লগইন করুন' : 'শুধুমাত্র Gmail / Email দিয়ে অ্যাকাউন্ট খুলুন'}
+                {mode === 'login' ? 'রেজিস্ট্রেশনকৃত ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন' : 'নতুন অ্যাকাউন্ট তৈরি করে ব্যালেন্স ও অর্ডার ট্র্যাক করুন'}
               </p>
             </div>
           </div>
@@ -113,19 +118,26 @@ export const AuthModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Notice strip that guest orders are not allowed */}
+        {/* Notice strip */}
         <div className="bg-amber-50 border-b border-amber-200/80 px-4 py-2 text-xs text-amber-900 flex items-center gap-1.5">
           <ShieldCheck className="w-4 h-4 text-amber-700 flex-shrink-0" />
-          <span>অর্ডার ও ব্যালেন্স সুরক্ষিত রাখতে লগইন করা বাধ্যতামূলক।</span>
+          <span>প্রতিটি অ্যাকাউন্টের ব্যালেন্স ও অর্ডার সম্পূর্ণ আলাদা ও সুরক্ষিত।</span>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
           {errorMsg && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl flex items-center gap-2">
-              <span className="font-bold">⚠️</span>
-              <span>{errorMsg}</span>
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <span className="font-medium leading-relaxed">{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs p-3 rounded-xl flex items-center gap-2">
+              <span className="font-bold">✓</span>
+              <span className="font-medium">{successMsg}</span>
             </div>
           )}
 
@@ -133,7 +145,7 @@ export const AuthModal: React.FC<Props> = ({
           {mode === 'register' && (
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">
-                আপনার নাম (Full Name)
+                আপনার পুরো নাম (Full Name)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -169,7 +181,9 @@ export const AuthModal: React.FC<Props> = ({
                 className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black text-sm outline-hidden font-sans"
               />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1">অ্যাকাউন্ট তৈরি ও লগইন শুধুমাত্র জিমেইল/ইমেইল দিয়ে হবে</p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              {mode === 'register' ? 'অ্যাকাউন্ট খোলার পর এই ইমেইল দিয়েই পরবর্তীতে লগইন করবেন' : 'আপনার নিবন্ধিত জিমেইল/ইমেইল লিখুন'}
+            </p>
           </div>
 
           {/* Password */}
@@ -243,7 +257,7 @@ export const AuthModal: React.FC<Props> = ({
                 অ্যাকাউন্ট নেই?{' '}
                 <button
                   type="button"
-                  onClick={() => { setMode('register'); setErrorMsg(''); }}
+                  onClick={() => { setMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
                   className="text-black font-bold underline hover:text-neutral-700 cursor-pointer ml-1"
                 >
                   রেজিস্ট্রেশন করুন (Create Account)
@@ -254,7 +268,7 @@ export const AuthModal: React.FC<Props> = ({
                 পূর্বেই অ্যাকাউন্ট আছে?{' '}
                 <button
                   type="button"
-                  onClick={() => { setMode('login'); setErrorMsg(''); }}
+                  onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
                   className="text-black font-bold underline hover:text-neutral-700 cursor-pointer ml-1"
                 >
                   লগইন করুন (Back to Login)

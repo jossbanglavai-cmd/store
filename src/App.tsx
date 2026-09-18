@@ -57,10 +57,21 @@ export default function App() {
   // User Profile
   const [user, setUser] = useState<UserProfile>(() => getUserProfile());
 
-  // Wallet & Orders
-  const [balance, setBalance] = useState<number>(() => getWalletBalance());
-  const [orders, setOrders] = useState<Order[]>(() => getLocalOrders());
+  // Wallet & Orders tied strictly to logged-in user account
+  const [balance, setBalance] = useState<number>(() => getWalletBalance(user.isLoggedIn ? user.email : undefined));
+  const [orders, setOrders] = useState<Order[]>(() => getLocalOrders(user.isLoggedIn ? user.email : undefined));
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Sync balance and orders whenever logged in user changes
+  useEffect(() => {
+    if (user.isLoggedIn && user.email) {
+      setBalance(getWalletBalance(user.email));
+      setOrders(getLocalOrders(user.email));
+    } else {
+      setBalance(0);
+      setOrders([]);
+    }
+  }, [user.isLoggedIn, user.email]);
 
   // Load live data
   useEffect(() => {
@@ -99,11 +110,13 @@ export default function App() {
   };
 
   const handleOrderPlaced = (newOrder: Order, newBalance?: number) => {
-    saveLocalOrder(newOrder);
+    if (!user.isLoggedIn || !user.email) return;
+
+    saveLocalOrder(newOrder, user.email);
     setOrders(prev => [newOrder, ...prev]);
 
     if (typeof newBalance === 'number') {
-      updateWalletBalance(newBalance);
+      updateWalletBalance(newBalance, user.email);
       setBalance(newBalance);
       showToast(`অর্ডার সম্পন্ন হয়েছে! নতুন ব্যালেন্স ৳${newBalance}`);
     } else {
@@ -112,8 +125,10 @@ export default function App() {
   };
 
   const handleAddMoneySuccess = (amount: number) => {
+    if (!user.isLoggedIn || !user.email) return;
+
     const updated = balance + amount;
-    updateWalletBalance(updated);
+    updateWalletBalance(updated, user.email);
     setBalance(updated);
     showToast(`৳${amount} টাকা যোগের রিকুয়েস্ট সফল হয়েছে! নতুন ব্যালেন্স: ৳${updated}`);
   };
@@ -126,12 +141,16 @@ export default function App() {
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     saveUserProfile(loggedInUser);
     setUser(loggedInUser);
+    setBalance(getWalletBalance(loggedInUser.email));
+    setOrders(getLocalOrders(loggedInUser.email));
     showToast(`স্বাগতম, ${loggedInUser.name}! সফলভাবে লগইন হয়েছে।`);
   };
 
   const handleLogout = () => {
     const guest = logoutUser();
     setUser(guest);
+    setBalance(0);
+    setOrders([]);
     showToast("সফলভাবে লগআউট করা হয়েছে।");
   };
 
@@ -397,6 +416,8 @@ export default function App() {
               onAddReview={handleAddReview}
               onBackToHome={() => setActiveTab('home')}
               productNames={Array.from(new Set(categories.flatMap(c => c.products.map(p => p.name))))}
+              user={user}
+              onOpenAuthModal={handleOpenAuthModal}
             />
           )}
 

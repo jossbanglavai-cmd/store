@@ -10,15 +10,18 @@ import {
   Check, 
   Filter,
   ArrowLeft,
-  UserCheck
+  UserCheck,
+  LogIn
 } from 'lucide-react';
-import { Review } from '../types';
+import { Review, UserProfile } from '../types';
 
 interface Props {
   reviews: Review[];
   onAddReview: (review: Review) => void;
   onBackToHome: () => void;
   productNames: string[];
+  user?: UserProfile;
+  onOpenAuthModal?: (mode?: 'login' | 'register') => void;
 }
 
 export const ReviewsView: React.FC<Props> = ({
@@ -26,13 +29,15 @@ export const ReviewsView: React.FC<Props> = ({
   onAddReview,
   onBackToHome,
   productNames,
+  user,
+  onOpenAuthModal,
 }) => {
   const [filterRating, setFilterRating] = useState<number | 'all'>('all');
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [helpfulMap, setHelpfulMap] = useState<Record<string, boolean>>({});
 
   // Write review form state
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(user?.isLoggedIn ? user.name : '');
   const [productName, setProductName] = useState(productNames[0] || 'Netflix');
   const [rating, setRating] = useState<number>(5);
   const [comment, setComment] = useState('');
@@ -59,15 +64,32 @@ export const ReviewsView: React.FC<Props> = ({
     }));
   };
 
+  const handleOpenWriteReview = () => {
+    if (!user || !user.isLoggedIn) {
+      if (onOpenAuthModal) {
+        onOpenAuthModal('login');
+      }
+      return;
+    }
+    setUserName(user.name || user.email.split('@')[0]);
+    setIsWriteModalOpen(true);
+  };
+
   const handleWriteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userName.trim() || !comment.trim()) return;
+    if (!user || !user.isLoggedIn) {
+      if (onOpenAuthModal) onOpenAuthModal('login');
+      return;
+    }
+
+    const finalName = (userName.trim() || user.name || user.email.split('@')[0]);
+    if (!finalName || !comment.trim()) return;
 
     setIsSubmitting(true);
     setTimeout(() => {
       const newReview: Review = {
         id: `rev-${Date.now()}`,
-        userName: userName.trim(),
+        userName: finalName,
         userPhoto: "",
         productName,
         rating,
@@ -83,7 +105,6 @@ export const ReviewsView: React.FC<Props> = ({
         setSuccessNotice(false);
         setIsWriteModalOpen(false);
         setComment('');
-        setUserName('');
       }, 1500);
     }, 600);
   };
@@ -110,15 +131,24 @@ export const ReviewsView: React.FC<Props> = ({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsWriteModalOpen(true)}
-            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs"
+            onClick={handleOpenWriteReview}
+            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
-            রিভিউ লিখুন
+            {user?.isLoggedIn ? (
+              <>
+                <Plus className="w-3.5 h-3.5" />
+                <span>রিভিউ লিখুন</span>
+              </>
+            ) : (
+              <>
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>রিভিউ দিতে লগইন করুন</span>
+              </>
+            )}
           </button>
           <button
             onClick={onBackToHome}
-            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition flex items-center gap-1"
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition flex items-center gap-1 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             দোকান
