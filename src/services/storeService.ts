@@ -436,7 +436,7 @@ export async function fetchLiveCategories(): Promise<Category[]> {
           avgRating: pf.avgRating?.stringValue || pf.avgRating?.doubleValue || "5.0",
           delivery: pf.delivery?.stringValue || "Instant (5-15 min)",
           inputLabel: pf.inputLabel?.stringValue || "Player ID / Email",
-          description: pf.description?.stringValue || "",
+          description: pf.description?.stringValue || pf.desc?.stringValue || pf.details?.stringValue || pf.info?.stringValue || pf.rules?.stringValue || pf.productDescription?.stringValue || pf.instruction?.stringValue || "",
           packages: packages.length > 0 ? packages : [{ name: "Standard", price: 100 }],
           categoryName: catName,
         };

@@ -52,12 +52,20 @@ export const ProductCard: React.FC<Props> = ({ product, onSelect }) => {
 
       {/* Content */}
       <div className="p-2 sm:p-3 flex flex-col flex-1 justify-between gap-1">
-        <h3 
-          className="font-bold text-xs sm:text-sm text-gray-800 tracking-wide line-clamp-1 group-hover:text-black transition"
-          title={product.name}
-        >
-          {product.name}
-        </h3>
+        <div>
+          <h3 
+            className="font-bold text-xs sm:text-sm text-gray-800 tracking-wide line-clamp-1 group-hover:text-black transition"
+            title={product.name}
+          >
+            {product.name}
+          </h3>
+
+          {product.description && product.description.trim() !== "" && (
+            <p className="text-[10px] text-gray-500 line-clamp-1 mt-0.5" title={product.description}>
+              {product.description}
+            </p>
+          )}
+        </div>
 
         {minPrice !== null && (
           <div className="flex items-center justify-center gap-1 text-[11px] sm:text-xs text-emerald-700 font-semibold">

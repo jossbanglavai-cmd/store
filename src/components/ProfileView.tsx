@@ -25,9 +25,6 @@ export const ProfileView: React.FC<Props> = ({
   onLogout,
   onNavigateTab,
 }) => {
-  const completedOrders = orders.filter(o => o.status === 'Success').length;
-  const totalSpent = orders.reduce((sum, o) => sum + (o.status === 'Success' ? o.price : 0), 0);
-
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       
@@ -176,7 +173,7 @@ export const ProfileView: React.FC<Props> = ({
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="bg-white p-4 rounded-xl border border-gray-200/90 shadow-xs text-center">
           <div className="text-xs text-gray-500 font-medium">ওয়ালেট ব্যালেন্স</div>
           <div className="text-lg sm:text-xl font-bold text-emerald-600 font-heading">৳{balance}</div>
@@ -185,11 +182,6 @@ export const ProfileView: React.FC<Props> = ({
         <div className="bg-white p-4 rounded-xl border border-gray-200/90 shadow-xs text-center">
           <div className="text-xs text-gray-500 font-medium">মোট অর্ডার</div>
           <div className="text-lg sm:text-xl font-bold text-gray-900 font-heading">{orders.length} টি</div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-gray-200/90 shadow-xs text-center">
-          <div className="text-xs text-gray-500 font-medium">সম্পন্ন খরচ</div>
-          <div className="text-lg sm:text-xl font-bold text-blue-600 font-heading">৳{totalSpent}</div>
         </div>
       </div>
 

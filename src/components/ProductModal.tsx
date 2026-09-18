@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, Copy, AlertCircle, ShieldCheck, Wallet, ArrowRight, Zap, LogIn } from 'lucide-react';
+import { X, Check, Copy, AlertCircle, ShieldCheck, Wallet, ArrowRight, Zap, LogIn, Info } from 'lucide-react';
 import { Product, Package, AppSettings, Order, UserProfile } from '../types';
 
 interface Props {
@@ -185,13 +185,6 @@ export const ProductModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Description if any */}
-          {product.description && (
-            <div className="bg-gray-50 border border-gray-100 p-3 rounded-xl text-xs text-gray-600 leading-relaxed">
-              {product.description}
-            </div>
-          )}
-
           {/* Step 1: Select Package */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
@@ -239,6 +232,19 @@ export const ProductModal: React.FC<Props> = ({
             />
           </div>
 
+          {/* Description (Above Payment Type & Left-Aligned) */}
+          {product.description && product.description.trim() !== "" && (
+            <div className="bg-neutral-50 border border-gray-200/90 rounded-xl p-3.5 space-y-1.5 text-left animate-in fade-in">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-800">
+                <Info className="w-3.5 h-3.5 text-neutral-700 flex-shrink-0" />
+                <span>পণ্যের বিবরণ (Description)</span>
+              </div>
+              <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-line text-left">
+                {product.description.trim()}
+              </div>
+            </div>
+          )}
+
           {/* Step 3: Payment Type Choice */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
@@ -257,7 +263,7 @@ export const ProductModal: React.FC<Props> = ({
               >
                 <span className="text-xs sm:text-sm">বিকাশ / নগদ (Direct)</span>
                 <span className={`text-[10px] ${payType === 'direct' ? 'text-gray-300' : 'text-gray-500'}`}>
-                  সরাসরি ক্যাশ আউট / সেন্ড মানি
+                  সেন্ড মানি (Send Money)
                 </span>
               </div>
 
