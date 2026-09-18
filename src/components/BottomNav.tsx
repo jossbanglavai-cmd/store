@@ -80,7 +80,15 @@ export const BottomNav: React.FC<Props> = ({
           }`}
         >
           <div className={`p-1 rounded-lg transition ${activeTab === 'profile' ? 'bg-gray-100' : ''}`}>
-            <User className={`w-5 h-5 ${activeTab === 'profile' ? 'stroke-[2.5] text-black' : 'text-gray-500'}`} />
+            {user?.photoUrl ? (
+              <img 
+                src={user.photoUrl} 
+                alt={user.name} 
+                className={`w-5 h-5 rounded-full object-cover border ${activeTab === 'profile' ? 'border-black' : 'border-gray-300'}`} 
+              />
+            ) : (
+              <User className={`w-5 h-5 ${activeTab === 'profile' ? 'stroke-[2.5] text-black' : 'text-gray-500'}`} />
+            )}
           </div>
           <span className="text-[11px] font-medium leading-none">প্রোফাইল</span>
         </button>

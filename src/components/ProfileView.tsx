@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus, Camera } from 'lucide-react';
 import { Order, UserProfile } from '../types';
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
   onOpenAddMoney: () => void;
   onOpenFixModal: () => void;
   onOpenAuthModal: (mode?: 'login' | 'register') => void;
+  onOpenPhotoModal?: () => void;
   onLogout: () => void;
   onNavigateTab?: (tab: 'home' | 'orders' | 'reviews') => void;
 }
@@ -20,6 +21,7 @@ export const ProfileView: React.FC<Props> = ({
   onOpenAddMoney,
   onOpenFixModal,
   onOpenAuthModal,
+  onOpenPhotoModal,
   onLogout,
   onNavigateTab,
 }) => {
@@ -60,11 +62,39 @@ export const ProfileView: React.FC<Props> = ({
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+          
+          {/* Avatar with ImgBB Photo Support & 1 Centered Camera Icon */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-2xl border-4 border-gray-100 shadow-sm uppercase">
-              {user.name.slice(0, 2) || "AS"}
-            </div>
-            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white" title="Verified Customer">
+            <button
+              type="button"
+              onClick={onOpenPhotoModal}
+              className="relative w-20 h-20 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-2xl border-4 border-gray-100 shadow-sm uppercase overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-black group"
+              title="ছবি পরিবর্তন করতে ক্লিক করুন"
+            >
+              {user.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-200">{user.name.slice(0, 2) || "AS"}</span>
+              )}
+
+              {/* 1 Single Centered Camera Icon Overlay in the Middle */}
+              <div className={`absolute inset-0 flex items-center justify-center transition-all ${
+                user.photoUrl 
+                  ? 'bg-black/35 opacity-0 group-hover:opacity-100 text-white' 
+                  : 'bg-black/30 text-amber-300 group-hover:bg-black/50'
+              }`}>
+                <div className="p-2 rounded-full bg-black/50 backdrop-blur-xs text-white border border-white/20 shadow-xs flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-amber-400" />
+                </div>
+              </div>
+            </button>
+
+            {/* Verified badge */}
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-xs" title="Verified Customer">
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -90,7 +120,7 @@ export const ProfileView: React.FC<Props> = ({
               আইডি: <span className="font-mono font-semibold text-gray-700">{user.memberId}</span> | ইমেইল: <span className="font-mono text-gray-700">{user.email}</span>
             </p>
 
-            <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start">
+            <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start items-center">
               <span className="bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Verified Account
               </span>

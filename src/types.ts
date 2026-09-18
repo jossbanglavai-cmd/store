@@ -77,4 +77,5 @@ export interface UserProfile {
   isLoggedIn: boolean;
   memberId: string;
   joinDate?: string;
+  photoUrl?: string;
 }

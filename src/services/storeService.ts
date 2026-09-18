@@ -22,6 +22,7 @@ export interface RegisteredAccount {
   name: string;
   memberId: string;
   createdAt: string;
+  photoUrl?: string;
 }
 
 export const DEFAULT_USER: UserProfile = {
@@ -30,7 +31,8 @@ export const DEFAULT_USER: UserProfile = {
   email: "",
   isLoggedIn: false,
   memberId: "",
-  joinDate: ""
+  joinDate: "",
+  photoUrl: ""
 };
 
 // Registered Accounts Registry Management
@@ -49,6 +51,80 @@ export function saveRegisteredAccounts(accounts: Record<string, RegisteredAccoun
   } catch (err) {
     console.error("Error saving accounts registry", err);
   }
+}
+
+// Upload image directly to ImgBB
+export async function uploadToImgBB(fileOrBase64: File | Blob | string): Promise<string> {
+  const IMGBB_API_KEYS = [
+    '6d207e02198a847aa5ad3ac2292fc142',
+    '2d9b67946cbdfb8f2d5e7a9e334a13d7',
+    '6f1fa4d03e923e3cb8bc3e1d6d842b15'
+  ];
+
+  for (const apiKey of IMGBB_API_KEYS) {
+    try {
+      const formData = new FormData();
+      if (typeof fileOrBase64 === 'string') {
+        const base64Data = fileOrBase64.includes('base64,')
+          ? fileOrBase64.split('base64,')[1]
+          : fileOrBase64;
+        formData.append('image', base64Data);
+      } else {
+        formData.append('image', fileOrBase64);
+      }
+
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && (json.data?.display_url || json.data?.url)) {
+          return json.data.display_url || json.data.url;
+        }
+      }
+    } catch (e) {
+      console.warn('ImgBB upload attempt notice with key', apiKey, e);
+    }
+  }
+
+  // If external upload is unreachable, convert to robust Data URL
+  if (typeof fileOrBase64 === 'string') {
+    return fileOrBase64;
+  }
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(fileOrBase64);
+  });
+}
+
+// Update profile photo for logged-in user
+export function updateUserProfilePhoto(photoUrl: string, userEmail?: string): UserProfile {
+  const current = getUserProfile();
+  const email = (userEmail || current.email || '').trim().toLowerCase();
+  
+  const updatedUser: UserProfile = {
+    ...current,
+    photoUrl
+  };
+
+  saveUserProfile(updatedUser);
+
+  if (email) {
+    const accounts = getRegisteredAccounts();
+    if (accounts[email]) {
+      accounts[email].photoUrl = photoUrl;
+      saveRegisteredAccounts(accounts);
+    }
+  }
+
+  if (auth.currentUser) {
+    updateProfile(auth.currentUser, { photoURL: photoUrl }).catch(() => {});
+  }
+
+  return updatedUser;
 }
 
 // Register a brand new account
@@ -156,6 +232,8 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
   const accountName = existingAccount?.name || auth.currentUser?.displayName || email.split('@')[0];
   const memberId = existingAccount?.memberId || ("AS-" + Math.floor(100000 + Math.random() * 900000));
 
+  const photoUrl = existingAccount?.photoUrl || auth.currentUser?.photoURL || "";
+
   // If successfully logged in with Firebase but missing in local registry, sync it
   if (!existingAccount) {
     accounts[email] = {
@@ -163,7 +241,8 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
       password,
       name: accountName,
       memberId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      photoUrl
     };
     saveRegisteredAccounts(accounts);
   }
@@ -174,7 +253,8 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
     phone: "",
     isLoggedIn: true,
     memberId,
-    joinDate: "সদস্য"
+    joinDate: "সদস্য",
+    photoUrl
   };
 
   saveUserProfile(profile);

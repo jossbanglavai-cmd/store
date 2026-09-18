@@ -90,7 +90,7 @@ export const ReviewsView: React.FC<Props> = ({
       const newReview: Review = {
         id: `rev-${Date.now()}`,
         userName: finalName,
-        userPhoto: "",
+        userPhoto: user.photoUrl || "",
         productName,
         rating,
         comment: comment.trim(),

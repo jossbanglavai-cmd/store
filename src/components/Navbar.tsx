@@ -165,7 +165,15 @@ export const Navbar: React.FC<Props> = ({
               }`}
               title="আমার প্রোফাইল দেখুন"
             >
-              <User className={`w-5 h-5 mb-0.5 ${activeTab === 'profile' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
+              {user?.photoUrl ? (
+                <img 
+                  src={user.photoUrl} 
+                  alt={user.name} 
+                  className={`w-5 h-5 mb-0.5 rounded-full object-cover border ${activeTab === 'profile' ? 'border-black' : 'border-gray-300'}`} 
+                />
+              ) : (
+                <User className={`w-5 h-5 mb-0.5 ${activeTab === 'profile' ? 'text-black stroke-[2.2]' : 'text-gray-500'}`} />
+              )}
               <span className="text-[11px] font-semibold leading-tight">প্রোফাইল</span>
             </button>
           )}

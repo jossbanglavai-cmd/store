@@ -38,6 +38,7 @@ import { ReviewsView } from './components/ReviewsView';
 import { ResponsiveFixModal } from './components/ResponsiveFixModal';
 import { BottomNav } from './components/BottomNav';
 import { AuthModal } from './components/AuthModal';
+import { ProfilePhotoModal } from './components/ProfilePhotoModal';
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
@@ -50,6 +51,7 @@ export default function App() {
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isFixModalOpen, setIsFixModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
@@ -430,6 +432,7 @@ export default function App() {
               onOpenAddMoney={() => setIsAddMoneyOpen(true)}
               onOpenFixModal={() => setIsFixModalOpen(true)}
               onOpenAuthModal={handleOpenAuthModal}
+              onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
               onLogout={handleLogout}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
@@ -478,6 +481,17 @@ export default function App() {
           onClose={() => setIsAuthModalOpen(false)}
           onLoginSuccess={handleLoginSuccess}
           initialMode={authModalMode}
+        />
+
+        {/* Profile Photo Modal (ImgBB Cloud Upload) */}
+        <ProfilePhotoModal
+          isOpen={isPhotoModalOpen}
+          onClose={() => setIsPhotoModalOpen(false)}
+          user={user}
+          onUpdatePhoto={(newPhotoUrl) => {
+            setUser(prev => ({ ...prev, photoUrl: newPhotoUrl }));
+            showToast('প্রোফাইল ছবি সফলভাবে আপডেট হয়েছে!');
+          }}
         />
 
       </div>
