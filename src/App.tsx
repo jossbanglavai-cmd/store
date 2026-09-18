@@ -442,6 +442,8 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           reviewsCount={reviews.length}
+          user={user}
+          onOpenAuthModal={handleOpenAuthModal}
         />
 
         {/* Modals */}

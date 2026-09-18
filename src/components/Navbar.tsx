@@ -132,34 +132,36 @@ export const Navbar: React.FC<Props> = ({
             )}
           </button>
 
-          {/* Wallet Balance Pill */}
-          <button
-            onClick={onOpenAddMoney}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black text-white hover:bg-neutral-800 transition text-xs sm:text-sm font-semibold shadow-xs"
-            title="টাকা যোগ করতে ক্লিক করুন"
-          >
-            <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>৳{balance}</span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono hidden xs:inline">+ADD</span>
-          </button>
+          {/* Wallet Balance Pill - Only shown when logged in */}
+          {user?.isLoggedIn && (
+            <button
+              onClick={onOpenAddMoney}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black text-white hover:bg-neutral-800 transition text-xs sm:text-sm font-semibold shadow-xs cursor-pointer"
+              title="টাকা যোগ করতে ক্লিক করুন"
+            >
+              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>৳{balance}</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono hidden xs:inline">+ADD</span>
+            </button>
+          )}
 
-          {/* Profile or Login Tab beside balance */}
+          {/* Profile or Login Tab beside balance - Styled consistently with other nav items */}
           {user && !user.isLoggedIn ? (
             <button
               onClick={() => onOpenAuthModal ? onOpenAuthModal('login') : setActiveTab('profile')}
-              className="px-3 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] bg-black text-white hover:bg-neutral-800 shadow-xs cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] border bg-gray-100/90 text-gray-600 border-gray-200/60 hover:text-black hover:bg-white/60 cursor-pointer shadow-xs"
               title="লগইন বা রেজিস্ট্রেশন করুন"
             >
-              <LogIn className="w-4 h-4 mb-0.5 text-amber-400" />
-              <span className="text-[11px] font-bold leading-tight">লগইন</span>
+              <LogIn className="w-5 h-5 mb-0.5 text-gray-700 stroke-[2.2]" />
+              <span className="text-[11px] font-semibold leading-tight">লগইন</span>
             </button>
           ) : (
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] border ${
+              className={`px-3.5 py-1.5 rounded-xl transition flex flex-col items-center justify-center min-w-[64px] sm:min-w-[68px] border cursor-pointer ${
                 activeTab === 'profile'
                   ? 'bg-white text-black border-gray-300/80 shadow-xs font-bold'
-                  : 'bg-gray-100/90 text-gray-500 border-gray-200/60 hover:text-black hover:bg-white/60'
+                  : 'bg-gray-100/90 text-gray-500 border-gray-200/60 hover:text-black hover:bg-white/60 font-semibold'
               }`}
               title="আমার প্রোফাইল দেখুন"
             >

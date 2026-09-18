@@ -38,7 +38,7 @@ export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onB
           </div>
           <h3 className="font-bold text-gray-800 text-base mb-1">লগইন করা নেই</h3>
           <p className="text-xs text-gray-500 max-w-sm mb-4">
-            আপনার আগের ও বর্তমান সব অর্ডার দেখতে আপনার জিমেইল দিয়ে লগইন করুন। গেস্ট একাউন্টে কোনো অর্ডার সংরক্ষিত থাকে না।
+            আপনার আগের ও বর্তমান সব অর্ডার দেখতে আপনার অ্যাকাউন্টে লগইন বা রেজিস্ট্রেশন করুন।
           </p>
           <div className="flex items-center gap-2.5">
             <button

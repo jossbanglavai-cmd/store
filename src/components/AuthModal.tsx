@@ -118,12 +118,6 @@ export const AuthModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Notice strip */}
-        <div className="bg-amber-50 border-b border-amber-200/80 px-4 py-2 text-xs text-amber-900 flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-amber-700 flex-shrink-0" />
-          <span>প্রতিটি অ্যাকাউন্টের ব্যালেন্স ও অর্ডার সম্পূর্ণ আলাদা ও সুরক্ষিত।</span>
-        </div>
-
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
