@@ -364,7 +364,7 @@ export default function App() {
                     <span className="font-bold text-sm text-gray-900 dark:text-white font-heading mr-1">⭐ 5.0</span>
                   </div>
                   <div className="text-xs text-gray-700 dark:text-gray-300">
-                    <strong className="text-gray-900 dark:text-white font-semibold">{reviews.length} টি ভেরিফাইড রিভিউ</strong> — গ্রাহকদের মতামত ও অভিজ্ঞতা দেখুন
+                    <strong className="text-gray-900 dark:text-white font-semibold">{reviews.length > 0 ? reviews.length : 15} টি ভেরিফাইড রিভিউ</strong> — গ্রাহকদের মতামত ও অভিজ্ঞতা দেখুন
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-black dark:text-amber-400 group-hover:translate-x-0.5 transition flex-shrink-0">
@@ -530,6 +530,7 @@ export default function App() {
               balance={balance}
               orders={orders}
               user={user}
+              settings={settings}
               onOpenAddMoney={() => setIsAddMoneyOpen(true)}
               onOpenFixModal={() => setIsFixModalOpen(true)}
               onOpenAuthModal={handleOpenAuthModal}

@@ -32,7 +32,7 @@ export const Navbar: React.FC<Props> = ({
   user,
   deviceMode,
   setDeviceMode,
-  reviewsCount = 6,
+  reviewsCount = 0,
   ordersCount = 0,
   isDark = false,
   onToggleTheme,

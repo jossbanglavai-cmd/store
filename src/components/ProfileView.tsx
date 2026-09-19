@@ -1,11 +1,12 @@
 import React from 'react';
 import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus, Camera, Bot } from 'lucide-react';
-import { Order, UserProfile } from '../types';
+import { AppSettings, Order, UserProfile } from '../types';
 
 interface Props {
   balance: number;
   orders: Order[];
   user: UserProfile;
+  settings?: AppSettings;
   onOpenAddMoney: () => void;
   onOpenFixModal: () => void;
   onOpenAuthModal: (mode?: 'login' | 'register') => void;
@@ -18,6 +19,7 @@ export const ProfileView: React.FC<Props> = ({
   balance,
   orders,
   user,
+  settings,
   onOpenAddMoney,
   onOpenFixModal,
   onOpenAuthModal,
@@ -25,6 +27,9 @@ export const ProfileView: React.FC<Props> = ({
   onLogout,
   onNavigateTab,
 }) => {
+  const activeHours = settings?.operatingHours || "সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)";
+  const activePhone = settings?.whatsappPhone || settings?.payments?.bkash || "01770931981";
+  const activeDelivery = settings?.deliverySpeedText || "স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)";
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       
@@ -208,15 +213,15 @@ export const ProfileView: React.FC<Props> = ({
         <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-400" />
-            <span>অপারেশন সময়: সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)</span>
+            <span>অপারেশন সময়: {activeHours}</span>
           </div>
           <div className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-gray-400" />
-            <span>হেল্পলাইন ও পেমেন্ট নম্বর: <strong className="text-gray-800 dark:text-gray-200">01770931981</strong></span>
+            <span>হেল্পলাইন ও পেমেন্ট নম্বর: <strong className="text-gray-800 dark:text-gray-200">{activePhone}</strong></span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)</span>
+            <span>{activeDelivery}</span>
           </div>
         </div>
       </div>

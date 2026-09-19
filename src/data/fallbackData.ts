@@ -5,6 +5,7 @@ export const FALLBACK_SETTINGS: AppSettings = {
   noticeText: "🌙 𝗘𝗶𝗱 𝗔𝗹-𝗔𝗱𝗵𝗮 𝗠𝘂𝗯𝗮𝗿𝗮𝗸 🔥 𝗦𝘁𝗼𝗿𝗲 𝗢𝗽𝗲𝗻 🕙 10 𝗔𝗠 - 10 𝗣𝗠",
   operatingHours: "সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)",
   deliverySpeedText: "স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)",
+  whatsappPhone: "01770931981",
   sliderData: [],
   payments: {
     bkash: "01770931981",

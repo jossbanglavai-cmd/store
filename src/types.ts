@@ -44,6 +44,7 @@ export interface AppSettings {
   popupUrl?: string;
   operatingHours?: string;
   deliverySpeedText?: string;
+  whatsappPhone?: string;
 }
 
 export interface Order {

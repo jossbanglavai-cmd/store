@@ -1612,16 +1612,17 @@
     }
 
     function applySettingsUI(s) {
-      if (s.noticeText) {
+      if (!s) return;
+      if (s.noticeText !== undefined) {
         document.getElementById('settingNoticeText').value = s.noticeText;
       }
-      if (s.whatsappPhone || s.payments?.bkash) {
+      if (s.whatsappPhone !== undefined || s.payments?.bkash) {
         document.getElementById('settingWhatsappNum').value = s.whatsappPhone || s.payments?.bkash || '';
       }
-      if (s.deliverySpeedText) {
+      if (s.deliverySpeedText !== undefined) {
         document.getElementById('settingDeliveryText').value = s.deliverySpeedText;
       }
-      if (s.operatingHours) {
+      if (s.operatingHours !== undefined) {
         document.getElementById('settingHoursText').value = s.operatingHours;
       }
 

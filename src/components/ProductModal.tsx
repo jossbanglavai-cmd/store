@@ -192,7 +192,7 @@ export const ProductModal: React.FC<Props> = ({
                 <span>•</span>
                 <span className="text-emerald-400 flex items-center gap-1">
                   <Zap className="w-3 h-3" />
-                  {product.delivery || "Instant (5-15 min)"}
+                  {product.delivery || settings.deliverySpeedText || "Instant (5-15 min)"}
                 </span>
               </div>
             </div>
