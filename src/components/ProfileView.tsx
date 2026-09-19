@@ -60,7 +60,7 @@ export const ProfileView: React.FC<Props> = ({
       ) : (
         <div className="bg-white dark:bg-[#16181f] rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
           
-          {/* Avatar with ImgBB Photo Support & 1 Centered Camera Icon */}
+          {/* Avatar with Cloud Photo Support & 1 Centered Camera Icon */}
           <div className="relative">
             <button
               type="button"

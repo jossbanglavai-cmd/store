@@ -81,7 +81,7 @@ export const ProductCard: React.FC<Props> = ({ product, onSelect }) => {
               : 'bg-black dark:bg-white text-white dark:text-black group-hover:bg-neutral-800 dark:group-hover:bg-gray-200'
           }`}
         >
-          {isOut ? 'স্টক নেই' : 'কিনুন'}
+          {isOut ? 'শেষ' : 'কিনুন'}
         </button>
       </div>
 

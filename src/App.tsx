@@ -506,7 +506,7 @@ export default function App() {
           initialMode={authModalMode}
         />
 
-        {/* Profile Photo Modal (ImgBB Cloud Upload) */}
+        {/* Profile Photo Modal (Cloud Upload) */}
         <ProfilePhotoModal
           isOpen={isPhotoModalOpen}
           onClose={() => setIsPhotoModalOpen(false)}

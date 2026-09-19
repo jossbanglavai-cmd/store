@@ -53,7 +53,7 @@ export const ProfilePhotoModal: React.FC<Props> = ({
       updateUserProfilePhoto(uploadedUrl, user.email);
       onUpdatePhoto(uploadedUrl);
       setPreviewUrl(uploadedUrl);
-      setSuccessMsg('প্রোফাইল ছবি সফলভাবে ImgBB-তে আপলোড ও সেভ হয়েছে!');
+      setSuccessMsg('প্রোফাইল ছবি সফলভাবে আপলোড ও সেভ হয়েছে!');
 
       setTimeout(() => {
         setIsUploading(false);
@@ -87,7 +87,6 @@ export const ProfilePhotoModal: React.FC<Props> = ({
             </div>
             <div>
               <h3 className="font-bold text-sm leading-tight">প্রোফাইল ছবি আপলোড</h3>
-              <p className="text-[11px] text-gray-300">ImgBB ক্লাউড আপলোড</p>
             </div>
           </div>
 
@@ -169,7 +168,7 @@ export const ProfilePhotoModal: React.FC<Props> = ({
                 গ্যালারি থেকে ছবি সিলেক্ট করুন
               </span>
               <span className="text-[11px] text-gray-500">
-                ক্লিক করে ছবি নির্বাচন করুন (ImgBB-তে আপলোড হবে)
+                ক্লিক করে ছবি নির্বাচন করুন
               </span>
             </div>
           </div>
