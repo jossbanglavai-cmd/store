@@ -47,10 +47,12 @@ export const AuthModal: React.FC<Props> = ({
       }, 400);
     } catch (err: any) {
       setIsLoading(false);
-      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
-        setErrorMsg('ফায়ারবেসে এই ডোমেইন অনুমোদিত নয়! Firebase Console > Authentication > Settings > Authorized domains এ গিয়ে আপনার সাইটের ডোমেইনটি (run.app) যুক্ত করুন।');
+      if (err?.code === 'auth/popup-closed-by-user') {
+        setErrorMsg('গুগল লগইন পপআপ উইন্ডোটি বন্ধ করা হয়েছে। আবার চেষ্টা করুন।');
+      } else if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setErrorMsg('ফায়ারবেসে এই ডোমেইন অনুমোদিত নয়! Firebase Console > Authentication > Settings > Domains এ গিয়ে আপনার সাইটের ডোমেইনটি যুক্ত করুন।');
       } else {
-        setErrorMsg(err?.message || 'গুগল লগইন করতে সমস্যা হয়েছে।');
+        setErrorMsg('সমস্যা হচ্ছে, আবার পরে চেষ্টা করুন।');
       }
     }
   };
