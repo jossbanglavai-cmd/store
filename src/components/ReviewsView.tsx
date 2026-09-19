@@ -354,12 +354,10 @@ export const ReviewsView: React.FC<Props> = ({
                     <div>
                       <div className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                         <span>{review.userName}</span>
-                        <span title="Verified Customer">
+                        <span title="Verified Customer" className="flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400">
                           <ShieldCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50 dark:fill-blue-950" />
+                          <span>ভেরিফাইড</span>
                         </span>
-                      </div>
-                      <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                        {review.dateFormatted || 'সাম্প্রতিক'}
                       </div>
                     </div>
                   </div>
@@ -493,7 +491,7 @@ export const ReviewsView: React.FC<Props> = ({
                         <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
                       </div>
                       <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                        আইডি: {user.memberId}
+                        ভেরিফাইড গ্রাহক
                       </div>
                     </div>
                   </div>
