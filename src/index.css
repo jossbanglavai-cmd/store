@@ -1,9 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --font-heading: 'Teko', 'Hind Siliguri', sans-serif;
     --font-body: 'Hind Siliguri', sans-serif;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   html {
@@ -13,6 +20,7 @@
 
   body {
     font-family: var(--font-body);
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
@@ -20,4 +28,23 @@
   font-family: 'Teko', 'Hind Siliguri', sans-serif;
   letter-spacing: 0.5px;
 }
+
+/* Dark mode utilities & deep surfaces */
+.dark body {
+  background-color: #0b0d12;
+  color: #f3f4f6;
+}
+
+/* Custom scrollbars for dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #111318;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #272a34;
+  border-radius: 8px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3b3f4d;
+}
+
 

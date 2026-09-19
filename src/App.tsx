@@ -56,6 +56,33 @@ export default function App() {
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
   
+  // Dark mode theme state with localStorage persistence
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('amarstore_theme');
+      if (saved) return saved === 'dark';
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('amarstore_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('amarstore_theme', 'light');
+    }
+  }, [isDark]);
+
+  const setThemeExplicitly = (dark: boolean) => {
+    setIsDark(dark);
+  };
+
+  const toggleTheme = () => {
+    setIsDark(prev => !prev);
+  };
+  
   // User Profile
   const [user, setUser] = useState<UserProfile>(() => getUserProfile());
 
@@ -171,7 +198,7 @@ export default function App() {
   });
 
   return (
-    <div className={`min-h-screen bg-[#f4f6f9] text-gray-900 flex flex-col ${deviceMode === 'mobile-mock' ? 'items-center py-6 px-2 bg-neutral-900' : ''}`}>
+    <div className={`min-h-screen bg-[#f4f6f9] dark:bg-[#0b0d12] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-200 ${deviceMode === 'mobile-mock' ? 'items-center py-6 px-2 bg-neutral-900' : ''}`}>
       
       {/* Device Mode banner when simulating mobile */}
       {deviceMode === 'mobile-mock' && (
@@ -193,7 +220,7 @@ export default function App() {
       {/* Main Container Wrapper */}
       <div className={`w-full flex-1 flex flex-col transition-all duration-300 ${
         deviceMode === 'mobile-mock' 
-          ? 'max-w-[410px] min-h-[844px] bg-[#f4f6f9] rounded-3xl shadow-2xl overflow-hidden border-4 border-neutral-700 relative pb-16' 
+          ? 'max-w-[410px] min-h-[844px] bg-[#f4f6f9] dark:bg-[#0b0d12] rounded-3xl shadow-2xl overflow-hidden border-4 border-neutral-700 relative pb-16' 
           : 'pb-20 md:pb-10'
       }`}>
         
@@ -211,6 +238,9 @@ export default function App() {
           setDeviceMode={setDeviceMode}
           reviewsCount={reviews.filter(r => r.status === 'Approved' || (!r.status) || r.status === 'approved').length}
           ordersCount={orders.length}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onSetTheme={setThemeExplicitly}
         />
 
         {/* Toast Notification */}
@@ -228,7 +258,7 @@ export default function App() {
             <>
               {/* Notice Bar */}
               {!noticeDismissed && settings.noticeText && (
-                <div className="bg-black text-white px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-3 text-xs sm:text-sm shadow-xs animate-in fade-in">
+                <div className="bg-black dark:bg-gray-800 text-white px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-3 text-xs sm:text-sm shadow-xs animate-in fade-in border border-transparent dark:border-gray-700">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
                     <span className="font-semibold truncate tracking-wide">
@@ -251,33 +281,33 @@ export default function App() {
               {/* Customer Reviews Spotlight Strip */}
               <div 
                 onClick={() => setActiveTab('reviews')}
-                className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/90 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 transition group shadow-2xs"
+                className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/90 dark:border-amber-700/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 transition group shadow-2xs"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="flex items-center gap-0.5 text-amber-500">
-                    <span className="font-bold text-sm text-gray-900 font-heading mr-1">⭐ 5.0</span>
+                    <span className="font-bold text-sm text-gray-900 dark:text-white font-heading mr-1">⭐ 5.0</span>
                   </div>
-                  <div className="text-xs text-gray-700">
-                    <strong className="text-gray-900 font-semibold">{reviews.length} টি ভেরিফাইড রিভিউ</strong> — গ্রাহকদের মতামত ও অভিজ্ঞতা দেখুন
+                  <div className="text-xs text-gray-700 dark:text-gray-300">
+                    <strong className="text-gray-900 dark:text-white font-semibold">{reviews.length} টি ভেরিফাইড রিভিউ</strong> — গ্রাহকদের মতামত ও অভিজ্ঞতা দেখুন
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-black group-hover:translate-x-0.5 transition flex-shrink-0">
+                <div className="flex items-center gap-1 text-xs font-bold text-black dark:text-amber-400 group-hover:translate-x-0.5 transition flex-shrink-0">
                   <span>রিভিউ পড়ুন</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>
               </div>
 
               {/* Responsive Fix Callout Pill on Desktop */}
-              <div className="bg-white border border-amber-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="bg-white dark:bg-[#16181f] border border-amber-200/90 dark:border-amber-800/60 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 flex items-center justify-center flex-shrink-0 font-bold">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center flex-shrink-0 font-bold">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-gray-900 leading-tight">
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">
                       ডেক্সটপে ব্যানার ও কার্ড এতো বড় কেন হয়েছিল?
                     </h3>
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                       অরিজিনাল কোডে <code>max-width</code> ও <code>@media</code> না থাকায় ১৯২০ পিক্সেল স্ক্রিনে বড় দেখাচ্ছিল।
                     </p>
                   </div>
@@ -285,7 +315,7 @@ export default function App() {
 
                 <button
                   onClick={() => setIsFixModalOpen(true)}
-                  className="w-full sm:w-auto px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 flex-shrink-0 shadow-xs"
+                  className="w-full sm:w-auto px-4 py-2 bg-black dark:bg-amber-400 hover:bg-neutral-800 dark:hover:bg-amber-300 text-white dark:text-black rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 flex-shrink-0 shadow-xs"
                 >
                   <span>কারণ ও Netlify ফিক্স CSS দেখুন</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -303,12 +333,12 @@ export default function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Crunchyroll, WhatsApp, Netflix, VPN বা যেকোনো পণ্য খুঁজুন..."
-                    className="w-full pl-10 pr-9 py-2.5 bg-white rounded-xl border border-gray-200/90 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-xs sm:text-sm shadow-xs transition"
+                    className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-[#16181f] text-gray-900 dark:text-white rounded-xl border border-gray-200/90 dark:border-gray-800 focus:border-black dark:focus:border-gray-500 focus:ring-1 focus:ring-black dark:focus:ring-gray-500 outline-hidden text-xs sm:text-sm shadow-xs transition placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -321,8 +351,8 @@ export default function App() {
                     onClick={() => setSelectedCategory('all')}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex-shrink-0 ${
                       selectedCategory === 'all'
-                        ? 'bg-black text-white shadow-xs'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-bold'
+                        : 'bg-white dark:bg-[#16181f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     সব ক্যাটাগরি (All)
@@ -335,8 +365,8 @@ export default function App() {
                         onClick={() => setSelectedCategory(cat.name)}
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex-shrink-0 ${
                           isSelected
-                            ? 'bg-black text-white shadow-xs'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                            ? 'bg-black dark:bg-white text-white dark:text-black shadow-xs font-bold'
+                            : 'bg-white dark:bg-[#16181f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                       >
                         {cat.name}
@@ -349,13 +379,13 @@ export default function App() {
 
               {/* Product Grid Sections */}
               {filteredCategories.length === 0 ? (
-                <div className="bg-white rounded-2xl p-10 text-center border border-gray-200 shadow-xs">
+                <div className="bg-white dark:bg-[#16181f] rounded-2xl p-10 text-center border border-gray-200 dark:border-gray-800 shadow-xs">
                   <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <h4 className="font-bold text-gray-800 text-sm">কোনো প্রোডাক্ট পাওয়া যায়নি</h4>
-                  <p className="text-xs text-gray-500 mt-1">ভিন্ন কি-ওয়ার্ড দিয়ে সার্চ করুন অথবা অন্য ক্যাটাগরি বেছে নিন</p>
+                  <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">কোনো প্রোডাক্ট পাওয়া যায়নি</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">ভিন্ন কি-ওয়ার্ড দিয়ে সার্চ করুন অথবা অন্য ক্যাটাগরি বেছে নিন</p>
                   <button
                     onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-                    className="mt-3 px-4 py-1.5 bg-black text-white text-xs font-semibold rounded-lg"
+                    className="mt-3 px-4 py-1.5 bg-black dark:bg-white text-white dark:text-black text-xs font-semibold rounded-lg"
                   >
                     রিসেট করুন
                   </button>
@@ -368,11 +398,11 @@ export default function App() {
                       {/* Section Title */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="w-1.5 h-4 rounded-full bg-black" />
-                          <h2 className="text-base sm:text-lg font-bold font-heading tracking-wide text-gray-900">
+                          <span className="w-1.5 h-4 rounded-full bg-black dark:bg-white" />
+                          <h2 className="text-base sm:text-lg font-bold font-heading tracking-wide text-gray-900 dark:text-white">
                             {cat.name}
                           </h2>
-                          <span className="text-[11px] text-gray-600 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">
+                          <span className="text-[11px] text-gray-600 dark:text-gray-300 font-semibold bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-transparent dark:border-gray-700">
                             {cat.products.length} টি আইটেম
                           </span>
                         </div>
@@ -447,6 +477,9 @@ export default function App() {
           reviewsCount={reviews.length}
           user={user}
           onOpenAuthModal={handleOpenAuthModal}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onSetTheme={setThemeExplicitly}
         />
 
         {/* Modals */}
