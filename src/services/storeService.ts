@@ -12,8 +12,8 @@ import {
 import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 
 const FIREBASE_CONFIG = {
-  projectId: "dshop-46653",
-  apiKey: "AIzaSyAuFb9Ed8KgqxdzoT0ZZXCMYFpCzOkNfG4",
+  projectId: "amarstore-e6a3f",
+  apiKey: "AIzaSyAj_9HwDlzLrCzQIjjNORbmShHE_s9ufb4",
 };
 
 const USER_PROFILE_KEY = 'amar_store_user_profile';
