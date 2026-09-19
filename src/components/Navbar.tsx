@@ -18,6 +18,7 @@ interface Props {
   isDark?: boolean;
   onToggleTheme?: () => void;
   onSetTheme?: (dark: boolean) => void;
+  onOpenAdmin?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -36,6 +37,7 @@ export const Navbar: React.FC<Props> = ({
   isDark = false,
   onToggleTheme,
   onSetTheme,
+  onOpenAdmin,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#13151b]/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-xs transition-colors duration-200">
@@ -126,6 +128,18 @@ export const Navbar: React.FC<Props> = ({
             </div>
             <span className="text-[11px] leading-tight">রিভিউ</span>
           </button>
+
+          {/* Admin Button for Admin Email */}
+          {user?.email === 'trxrafiff@gmail.com' && (
+            <button
+              onClick={onOpenAdmin}
+              className="px-3.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[66px] transition cursor-pointer bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 font-bold"
+              title="অ্যাডমিন প্যানেল"
+            >
+              <ShieldCheck className="w-5 h-5 mb-0.5 stroke-[2.2]" />
+              <span className="text-[11px] leading-tight">অ্যাডমিন</span>
+            </button>
+          )}
         </nav>
 
         {/* Right Actions */}

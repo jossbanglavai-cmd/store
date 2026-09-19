@@ -47,7 +47,11 @@ export const AuthModal: React.FC<Props> = ({
       }, 400);
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMsg(err?.message || 'গুগল লগইন করতে সমস্যা হয়েছে।');
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setErrorMsg('ফায়ারবেসে এই ডোমেইন অনুমোদিত নয়! Firebase Console > Authentication > Settings > Authorized domains এ গিয়ে আপনার সাইটের ডোমেইনটি (run.app) যুক্ত করুন।');
+      } else {
+        setErrorMsg(err?.message || 'গুগল লগইন করতে সমস্যা হয়েছে।');
+      }
     }
   };
 
@@ -104,7 +108,11 @@ export const AuthModal: React.FC<Props> = ({
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMsg(err?.message || 'লগইন বা রেজিস্ট্রেশনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setErrorMsg('ফায়ারবেসে এই ডোমেইন অনুমোদিত নয়! Firebase Console > Authentication > Settings > Authorized domains এ গিয়ে আপনার সাইটের ডোমেইনটি (run.app) যুক্ত করুন।');
+      } else {
+        setErrorMsg(err?.message || 'লগইন বা রেজিস্ট্রেশনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+      }
     }
   };
 

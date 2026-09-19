@@ -323,9 +323,17 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
 
 // Google Login Integration with Firebase Auth
 export async function loginWithGoogle(): Promise<UserProfile> {
-  const provider = new GoogleAuthProvider();
-  const userCredential = await signInWithPopup(auth, provider);
-  const firebaseUser = userCredential.user;
+  let firebaseUser: any = null;
+  try {
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+    firebaseUser = userCredential.user;
+  } catch (err: any) {
+    if (err?.code === 'auth/unauthorized-domain') {
+      throw new Error("Firebase-এ এই ওয়েবসাইটের ডোমেন অনুমোদিত (Authorized) করা নেই। অনুগ্রহ করে ফায়ারবেস কনসোলে Authentication -> Settings -> Authorized domains-এ গিয়ে আপনার ওয়েবসাইটের লিঙ্কটি (Domain) যোগ করে দিন।");
+    }
+    throw err;
+  }
 
   const email = (firebaseUser.email || '').trim().toLowerCase();
   const name = firebaseUser.displayName || email.split('@')[0];

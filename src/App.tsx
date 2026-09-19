@@ -39,6 +39,7 @@ import { AiSupportModal } from './components/AiSupportModal';
 import { BottomNav } from './components/BottomNav';
 import { AuthModal } from './components/AuthModal';
 import { ProfilePhotoModal } from './components/ProfilePhotoModal';
+import { AdminPanelModal } from './components/AdminPanelModal';
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
@@ -61,6 +62,7 @@ export default function App() {
   const [isFixModalOpen, setIsFixModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
@@ -258,6 +260,7 @@ export default function App() {
           isDark={isDark}
           onToggleTheme={toggleTheme}
           onSetTheme={setThemeExplicitly}
+          onOpenAdmin={() => setIsAdminOpen(true)}
         />
 
         {/* Toast Notification */}
@@ -553,6 +556,16 @@ export default function App() {
             setUser(prev => ({ ...prev, photoUrl: newPhotoUrl }));
             showToast('প্রোফাইল ছবি সফলভাবে আপডেট হয়েছে!');
           }}
+        />
+
+        {/* Admin Panel Modal */}
+        <AdminPanelModal
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+          categories={categories}
+          onUpdateCategories={setCategories}
+          settings={settings}
+          onUpdateSettings={setSettings}
         />
 
       </div>
