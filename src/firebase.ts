@@ -3,12 +3,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAuFb9Ed8KgqxdzoT0ZZXCMYFpCzOkNfG4",
-  authDomain: "dshop-46653.firebaseapp.com",
-  projectId: "dshop-46653",
-  storageBucket: "dshop-46653.firebasestorage.app",
-  messagingSenderId: "967992598450",
-  appId: "1:967992598450:web:f4455afe70e3d2861e0eab"
+  apiKey: "AIzaSyAj_9HwDlzLrCzQIjjNORbmShHE_s9ufb4",
+  authDomain: "amarstore-e6a3f.firebaseapp.com",
+  projectId: "amarstore-e6a3f",
+  storageBucket: "amarstore-e6a3f.firebasestorage.app",
+  messagingSenderId: "390031961658",
+  appId: "1:390031961658:web:749a0384f04c36223bcf03"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
