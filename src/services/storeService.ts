@@ -677,57 +677,65 @@ export async function fetchLiveHelpfulCounts(): Promise<Record<string, number>> 
 export async function getUserVotedReviews(userKey: string): Promise<Record<string, boolean>> {
   if (!userKey) return {};
   try {
-    const querySnapshot = await getDocs(collection(db, 'helpful_voters'));
-    const votedMap: Record<string, boolean> = {};
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (docSnap.id.endsWith(`_${userKey}`) && data.voted) {
-        const reviewId = docSnap.id.replace(`_${userKey}`, '');
-        votedMap[reviewId] = true;
-      }
-    });
-    return votedMap;
+    const stored = localStorage.getItem(`amar_store_voted_${userKey}`);
+    return stored ? JSON.parse(stored) : {};
   } catch (err) {
-    console.warn("Failed to get user voted reviews", err);
     return {};
   }
 }
 
 export async function toggleUserHelpfulVote(reviewId: string, userKey: string): Promise<{ newCount: number; hasVoted: boolean }> {
   if (!userKey) throw new Error("User key required");
-  const voterDocId = `${reviewId}_${userKey}`;
-  const voterRef = doc(db, 'helpful_voters', voterDocId);
-  const countRef = doc(db, 'helpful_counts', 'global');
-
+  
+  const storageKey = `amar_store_voted_${userKey}`;
+  let userVotedMap: Record<string, boolean> = {};
   try {
-    const voterSnap = await getDoc(voterRef);
-    const hasVotedBefore = voterSnap.exists() && voterSnap.data().voted;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) userVotedMap = JSON.parse(stored);
+  } catch {}
 
-    const countSnap = await getDoc(countRef);
-    const countData = countSnap.exists() ? countSnap.data() : {};
-    const currentCount = Number(countData[reviewId] || 0);
+  const hasVotedBefore = !!userVotedMap[reviewId];
 
-    let newCount = currentCount;
-    let newHasVoted = false;
+  // Get current global counts from localStorage cache or default
+  let globalCounts: Record<string, number> = {};
+  try {
+    const cached = localStorage.getItem('amar_store_real_helpful_counts');
+    if (cached) globalCounts = JSON.parse(cached);
+  } catch {}
 
-    if (hasVotedBefore) {
-      await deleteDoc(voterRef);
-      newCount = Math.max(0, currentCount - 1);
-      newHasVoted = false;
-    } else {
-      await setDoc(voterRef, { voted: true, userKey, reviewId });
-      newCount = currentCount + 1;
-      newHasVoted = true;
-    }
+  const currentCount = Number(globalCounts[reviewId] || 0);
+  let newCount = currentCount;
+  let newHasVoted = false;
 
+  if (hasVotedBefore) {
+    newCount = Math.max(0, currentCount - 1);
+    newHasVoted = false;
+    delete userVotedMap[reviewId];
+  } else {
+    newCount = currentCount + 1;
+    newHasVoted = true;
+    userVotedMap[reviewId] = true;
+  }
+
+  // Update local storage cache immediately
+  globalCounts[reviewId] = newCount;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(userVotedMap));
+    localStorage.setItem('amar_store_real_helpful_counts', JSON.stringify(globalCounts));
+  } catch {}
+
+  // Try to sync to Firestore in background without blocking
+  try {
+    const countRef = doc(db, 'helpful_counts', 'global');
+    const countSnap = await getDoc(countRef).catch(() => null);
+    const countData = countSnap && countSnap.exists() ? countSnap.data() : {};
     const updatedCounts = { ...countData, [reviewId]: newCount };
     await setDoc(countRef, updatedCounts, { merge: true });
-
-    return { newCount, hasVoted: newHasVoted };
   } catch (err) {
-    console.warn("Error toggling helpful vote", err);
-    throw err;
+    console.warn("Background Firestore sync failed, but local vote recorded", err);
   }
+
+  return { newCount, hasVoted: newHasVoted };
 }
 
 

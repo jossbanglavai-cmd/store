@@ -66,7 +66,7 @@ export const ReviewsView: React.FC<Props> = ({
     }
   });
 
-  const userKey = user && user.isLoggedIn ? (user.email || user.memberId || '').toLowerCase().trim() : '';
+  const userKey = user && user.isLoggedIn ? (user.email || user.memberId || user.name || 'user_session').toLowerCase().trim() : '';
 
   // Fetch live global helpful counts and user's voted reviews from Firestore
   useEffect(() => {
