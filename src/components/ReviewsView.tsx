@@ -147,6 +147,15 @@ export const ReviewsView: React.FC<Props> = ({
   };
 
   const handleHelpful = (id: string, review: Review) => {
+    if (!user || !user.isLoggedIn) {
+      if (onOpenAuthModal) {
+        onOpenAuthModal('login');
+      } else {
+        alert('রিভিউতে সহায়ক (Like) দিতে প্রথমে লগইন করুন।');
+      }
+      return;
+    }
+
     const isCurrentlyHelpful = !!helpfulMap[id];
     const currentCount = getHelpfulCount(review);
     const newCount = isCurrentlyHelpful 
