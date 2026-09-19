@@ -21,6 +21,8 @@ import {
   saveUserReview,
   getLocalOrders, 
   saveLocalOrder, 
+  deleteUserOrder,
+  clearAllUserOrders,
   getWalletBalance, 
   updateWalletBalance,
   getUserProfile,
@@ -245,6 +247,20 @@ export default function App() {
     } else {
       showToast(`অর্ডার প্লেস করা হয়েছে! খুব দ্রুত ভেরিফাই করে সম্পন্ন করা হবে।`);
     }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!user.isLoggedIn || !user.email) return;
+    await deleteUserOrder(orderId, user.email);
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    showToast("অর্ডারটি সফলভাবে মুছে ফেলা হয়েছে।");
+  };
+
+  const handleClearAllOrders = async () => {
+    if (!user.isLoggedIn || !user.email) return;
+    await clearAllUserOrders(user.email);
+    setOrders([]);
+    showToast("সকল অর্ডার হিস্টোরি মুছে ফেলা হয়েছে।");
   };
 
   const handleAddMoneySuccess = (amount: number, reqId?: string) => {
@@ -506,6 +522,8 @@ export default function App() {
               user={user}
               onOpenAuthModal={handleOpenAuthModal}
               onBackToHome={() => setActiveTab('home')}
+              onDeleteOrder={handleDeleteOrder}
+              onClearAllOrders={handleClearAllOrders}
             />
           )}
 

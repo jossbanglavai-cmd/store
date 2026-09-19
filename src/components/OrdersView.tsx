@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, ArrowLeft, LogIn } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, ShoppingBag, ArrowLeft, LogIn, Trash2 } from 'lucide-react';
 import { Order, UserProfile } from '../types';
 
 interface Props {
@@ -7,9 +7,18 @@ interface Props {
   user?: UserProfile;
   onOpenAuthModal?: (mode?: 'login' | 'register') => void;
   onBackToHome: () => void;
+  onDeleteOrder?: (orderId: string) => void;
+  onClearAllOrders?: () => void;
 }
 
-export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onBackToHome }) => {
+export const OrdersView: React.FC<Props> = ({ 
+  orders, 
+  user, 
+  onOpenAuthModal, 
+  onBackToHome,
+  onDeleteOrder,
+  onClearAllOrders
+}) => {
   return (
     <div className="max-w-2xl mx-auto w-full space-y-4">
       
@@ -22,13 +31,29 @@ export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onB
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">আপনার সাম্প্রতিক সব অর্ডারের স্ট্যাটাস দেখুন</p>
         </div>
-        <button
-          onClick={onBackToHome}
-          className="text-xs font-semibold text-black dark:text-white hover:underline flex items-center gap-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          দোকানে ফিরুন
-        </button>
+        <div className="flex items-center gap-2">
+          {orders.length > 0 && onClearAllOrders && (
+            <button
+              onClick={() => {
+                if (window.confirm('আপনি কি আপনার সকল অর্ডার হিস্টোরি ক্লিয়ার করতে চান?')) {
+                  onClearAllOrders();
+                }
+              }}
+              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/50 px-2.5 py-1.5 rounded-lg cursor-pointer flex items-center gap-1 transition"
+              title="সব অর্ডার মুছুন"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">হিস্টোরি মুছুন</span>
+            </button>
+          )}
+          <button
+            onClick={onBackToHome}
+            className="text-xs font-semibold text-black dark:text-white hover:underline flex items-center gap-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            দোকানে ফিরুন
+          </button>
+        </div>
       </div>
 
       {user && !user.isLoggedIn ? (
@@ -81,7 +106,7 @@ export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onB
             return (
               <div
                 key={order.id}
-                className="bg-white dark:bg-[#16181f] rounded-2xl border border-gray-200/90 dark:border-gray-800 p-5 shadow-xs flex flex-col justify-between"
+                className="bg-white dark:bg-[#16181f] rounded-2xl border border-gray-200/90 dark:border-gray-800 p-5 shadow-xs flex flex-col justify-between relative group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 pb-3 mb-3 border-b border-dashed border-gray-200 dark:border-gray-800">
@@ -90,20 +115,37 @@ export const OrdersView: React.FC<Props> = ({ orders, user, onOpenAuthModal, onB
                       <h4 className="font-bold text-base text-gray-900 dark:text-white">{order.product}</h4>
                     </div>
 
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 ${
-                        isSuccess
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                          : isPending
-                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                          : 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300'
-                      }`}
-                    >
-                      {isSuccess && <CheckCircle className="w-3.5 h-3.5" />}
-                      {isPending && <Clock className="w-3.5 h-3.5" />}
-                      {!isSuccess && !isPending && <XCircle className="w-3.5 h-3.5" />}
-                      {order.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                          isSuccess
+                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                            : isPending
+                            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                            : 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300'
+                        }`}
+                      >
+                        {isSuccess && <CheckCircle className="w-3.5 h-3.5" />}
+                        {isPending && <Clock className="w-3.5 h-3.5" />}
+                        {!isSuccess && !isPending && <XCircle className="w-3.5 h-3.5" />}
+                        {order.status}
+                      </span>
+
+                      {onDeleteOrder && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm('আপনি কি এই অর্ডারটি মুছে ফেলতে চান?')) {
+                              onDeleteOrder(order.id);
+                            }
+                          }}
+                          className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
+                          title="অর্ডার মুছুন"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">

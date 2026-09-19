@@ -643,13 +643,72 @@ export function getLocalOrders(userEmail?: string): Order[] {
 export function saveLocalOrder(order: Order, userEmail?: string): void {
   try {
     if (!userEmail) return;
-    const key = getStorageKeyForUser('amar_store_orders', userEmail);
-    const current = getLocalOrders(userEmail);
-    const updated = [order, ...current];
+    const cleanEmail = userEmail.trim().toLowerCase();
+    const key = getStorageKeyForUser('amar_store_orders', cleanEmail);
+    const current = getLocalOrders(cleanEmail);
+    const updated = [order, ...current.filter(o => o.id !== order.id)];
     localStorage.setItem(key, JSON.stringify(updated));
-    syncUserToFirestore(userEmail, { orders: updated });
+    syncUserToFirestore(cleanEmail, { orders: updated });
+
+    // Also write directly to the top-level 'orders' collection in Firestore
+    const orderDocRef = doc(db, 'orders', order.id);
+    setDoc(orderDocRef, {
+      id: order.id,
+      userEmail: cleanEmail,
+      productName: order.product,
+      packageName: order.package,
+      amount: order.price,
+      targetAccount: order.playerInfo,
+      status: order.status === 'Success' ? 'completed' : order.status === 'Cancel' ? 'cancelled' : 'pending',
+      paymentMethod: order.method,
+      senderPhone: order.senderPhone || '',
+      trxId: order.trx || '',
+      createdAt: order.timestamp ? new Date(order.timestamp).toISOString() : new Date().toISOString()
+    }).catch((err) => {
+      console.warn("Direct order doc write notice:", err);
+    });
   } catch (err) {
     console.error("Error saving order", err);
+  }
+}
+
+export async function deleteUserOrder(orderId: string, userEmail?: string): Promise<void> {
+  try {
+    if (userEmail) {
+      const cleanEmail = userEmail.trim().toLowerCase();
+      const key = getStorageKeyForUser('amar_store_orders', cleanEmail);
+      const current = getLocalOrders(cleanEmail);
+      const updated = current.filter(o => o.id !== orderId);
+      localStorage.setItem(key, JSON.stringify(updated));
+      await syncUserToFirestore(cleanEmail, { orders: updated });
+    }
+    // Delete from Firestore top-level orders collection
+    await deleteDoc(doc(db, 'orders', orderId));
+    try {
+      await deleteDoc(doc(db, 'deposit_requests', orderId));
+    } catch {}
+  } catch (err) {
+    console.warn("Error deleting order:", err);
+  }
+}
+
+export async function clearAllUserOrders(userEmail?: string): Promise<void> {
+  try {
+    if (userEmail) {
+      const cleanEmail = userEmail.trim().toLowerCase();
+      const key = getStorageKeyForUser('amar_store_orders', cleanEmail);
+      const current = getLocalOrders(cleanEmail);
+      localStorage.setItem(key, JSON.stringify([]));
+      await syncUserToFirestore(cleanEmail, { orders: [] });
+      for (const ord of current) {
+        if (ord.id) {
+          deleteDoc(doc(db, 'orders', ord.id)).catch(() => {});
+          deleteDoc(doc(db, 'deposit_requests', ord.id)).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Error clearing orders:", err);
   }
 }
 

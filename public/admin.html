@@ -331,9 +331,14 @@
             </h2>
             <p class="text-xs text-slate-400">অর্ডার স্ট্যাটাস আপডেট করুন, পেন্ডিং এপ্রুভ করুন বা ডিলিট করুন</p>
           </div>
-          <button onclick="loadOrdersData()" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-sm flex items-center gap-2 self-end">
-            <i class="fa-solid fa-rotate"></i> রিফ্রেশ ডাটা
-          </button>
+          <div class="flex items-center gap-2 self-end">
+            <button onclick="clearAllOrdersData()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-2 rounded-xl border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer" title="সকল অর্ডার মুছে ফেলুন">
+              <i class="fa-solid fa-trash-can"></i> সব অর্ডার মুছুন
+            </button>
+            <button onclick="loadOrdersData()" class="bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-rotate"></i> রিফ্রেশ
+            </button>
+          </div>
         </div>
 
         <div id="ordersContainer" class="space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar">
@@ -1360,21 +1365,113 @@
     async function updateOrderStatus(orderId, status) {
       try {
         await db.collection('orders').doc(orderId).update({ status });
+
+        // Synchronize with user's orders array in users collection
+        try {
+          const orderDoc = await db.collection('orders').doc(orderId).get();
+          const orderData = orderDoc.exists ? orderDoc.data() : null;
+          const userEmail = (orderData?.userEmail || '').trim().toLowerCase();
+          const mappedStatus = status === 'completed' ? 'Success' : status === 'cancelled' ? 'Cancelled' : 'Pending';
+
+          if (userEmail) {
+            const userRef = db.collection('users').doc(userEmail);
+            const userSnap = await userRef.get();
+            if (userSnap.exists) {
+              const uData = userSnap.data();
+              const userOrders = Array.isArray(uData.orders) ? uData.orders : [];
+              const updated = userOrders.map(o => o.id === orderId ? { ...o, status: mappedStatus } : o);
+              await userRef.update({ orders: updated });
+            }
+          }
+        } catch(e) {
+          console.warn("User orders sync warning:", e);
+        }
+
         showToast(`অর্ডার স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে!`);
         loadOrdersData();
       } catch (err) {
-        alert('অর্ডার আপডেট করতে সমস্যা হয়েছে');
+        alert('অর্ডার আপডেট করতে সমস্যা হয়েছে: ' + err.message);
       }
     }
 
     async function deleteOrderData(orderId) {
       if (!confirm('আপনি কি নিশ্চিত যে এই অর্ডারটি ডাটাবেজ থেকে চিরতরে মুছে ফেলতে চান?')) return;
       try {
+        // 1. Get userEmail before deleting if available
+        let userEmail = '';
+        try {
+          const orderDoc = await db.collection('orders').doc(orderId).get();
+          if (orderDoc.exists) {
+            userEmail = (orderDoc.data()?.userEmail || '').trim().toLowerCase();
+          }
+        } catch(e) {}
+
+        // 2. Delete from orders collection
         await db.collection('orders').doc(orderId).delete();
+
+        // 3. Delete from deposit_requests if exists
+        try {
+          await db.collection('deposit_requests').doc(orderId).delete();
+        } catch(e) {}
+
+        // 4. Remove from user's orders array
+        if (userEmail) {
+          try {
+            const userRef = db.collection('users').doc(userEmail);
+            const userSnap = await userRef.get();
+            if (userSnap.exists) {
+              const uData = userSnap.data();
+              const userOrders = Array.isArray(uData.orders) ? uData.orders : [];
+              const filtered = userOrders.filter(o => o.id !== orderId);
+              await userRef.update({ orders: filtered });
+            }
+          } catch(e) {}
+        } else {
+          // If no direct email, clean across all users
+          try {
+            const usersSnap = await db.collection('users').get();
+            usersSnap.forEach(async (uDoc) => {
+              const uData = uDoc.data();
+              if (Array.isArray(uData.orders) && uData.orders.some(o => o.id === orderId)) {
+                const filtered = uData.orders.filter(o => o.id !== orderId);
+                await db.collection('users').doc(uDoc.id).update({ orders: filtered });
+              }
+            });
+          } catch(e) {}
+        }
+
         showToast('অর্ডার চিরতরে ডিলিট করা হয়েছে!');
         loadOrdersData();
       } catch (err) {
         alert('মুছে ফেলতে সমস্যা হয়েছে: ' + err.message);
+      }
+    }
+
+    async function clearAllOrdersData() {
+      if (!confirm('সতর্কতা: আপনি কি ডাটাবেজের সকল অর্ডার হিস্টোরি মুছে ফেলতে চান?')) return;
+      try {
+        const snapshot = await db.collection('orders').get();
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+
+        // Also clean orders array in users collection
+        try {
+          const usersSnap = await db.collection('users').get();
+          usersSnap.forEach(async (uDoc) => {
+            const uData = uDoc.data();
+            if (Array.isArray(uData.orders) && uData.orders.length > 0) {
+              await db.collection('users').doc(uDoc.id).update({ orders: [] });
+            }
+          });
+        } catch(e) {}
+
+        showToast('সকল অর্ডার সফলভাবে মুছে ফেলা হয়েছে!');
+        loadOrdersData();
+      } catch (err) {
+        alert('অর্ডার মুছতে সমস্যা হয়েছে: ' + err.message);
       }
     }
 
