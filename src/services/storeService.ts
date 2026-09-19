@@ -738,7 +738,57 @@ export function updateWalletBalance(newBal: number, userEmail?: string): void {
   }
 }
 
-// Live real-time listener for user balance and orders from Firestore
+export function parseFirestoreOrder(docId: string, data: any): Order {
+  const isCompleted = data.status === 'completed' || data.status === 'Success' || data.status === 'success';
+  const isCancelled = data.status === 'cancelled' || data.status === 'Cancel' || data.status === 'cancel';
+  const status: 'Success' | 'Cancel' | 'Pending' = isCompleted ? 'Success' : isCancelled ? 'Cancel' : 'Pending';
+
+  const createdAt = data.createdAt || data.timestamp || new Date().toISOString();
+  const timeNum = typeof createdAt === 'number' ? createdAt : new Date(createdAt).getTime();
+
+  return {
+    id: data.id || docId,
+    product: data.productName || data.product || 'Product',
+    package: data.packageName || data.package || 'Standard',
+    price: Number(data.amount || data.price || 0),
+    playerInfo: data.targetAccount || data.playerInfo || data.inputField || data.playerId || '',
+    status,
+    method: data.paymentMethod || data.method || 'Manual',
+    trx: data.trxId || data.trx || '',
+    senderPhone: data.senderPhone || '',
+    timeString: new Date(timeNum).toLocaleString('bn-BD'),
+    timestamp: timeNum
+  };
+}
+
+// Live real-time listener for user orders from Firestore orders collection
+export function listenToLiveUserOrders(email: string, onUpdate: (orders: Order[]) => void): () => void {
+  if (!email) return () => {};
+  const cleanEmail = email.trim().toLowerCase();
+  const ordersCol = collection(db, 'orders');
+
+  return onSnapshot(ordersCol, (snapshot) => {
+    const userOrders: Order[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const orderUserEmail = (data.userEmail || data.email || '').trim().toLowerCase();
+      if (orderUserEmail === cleanEmail) {
+        userOrders.push(parseFirestoreOrder(docSnap.id, data));
+      }
+    });
+
+    // Sort newest first
+    userOrders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    const key = getStorageKeyForUser('amar_store_orders', cleanEmail);
+    localStorage.setItem(key, JSON.stringify(userOrders));
+    onUpdate(userOrders);
+  }, (err) => {
+    console.warn("Orders live listener notice:", err);
+  });
+}
+
+// Live real-time listener for user balance and profile from Firestore
 export function listenToLiveUser(email: string, onUpdate: (data: { balance: number; orders?: Order[]; name?: string; photoUrl?: string }) => void): () => void {
   if (!email) return () => {};
   const cleanEmail = email.trim().toLowerCase();

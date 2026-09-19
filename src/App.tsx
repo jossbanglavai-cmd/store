@@ -21,14 +21,13 @@ import {
   saveUserReview,
   getLocalOrders, 
   saveLocalOrder, 
-  deleteUserOrder,
-  clearAllUserOrders,
   getWalletBalance, 
   updateWalletBalance,
   getUserProfile,
   saveUserProfile,
   logoutUser,
   listenToLiveUser,
+  listenToLiveUserOrders,
   listenToLiveCategories,
   listenToLiveSettings,
   listenToLiveReviews
@@ -202,22 +201,24 @@ export default function App() {
     };
   }, []);
 
-  // Listen to live user balance and updates in real-time from Firestore
+  // Listen to live user balance and live orders in real-time from Firestore
   useEffect(() => {
     if (!user.isLoggedIn || !user.email) return;
 
     const unsubscribeUser = listenToLiveUser(user.email, (liveData) => {
       setBalance(liveData.balance);
-      if (liveData.orders) {
-        setOrders(liveData.orders);
-      }
       if (liveData.photoUrl && liveData.photoUrl !== user.photoUrl) {
         setUser(prev => ({ ...prev, photoUrl: liveData.photoUrl }));
       }
     });
 
+    const unsubscribeOrders = listenToLiveUserOrders(user.email, (liveOrders) => {
+      setOrders(liveOrders);
+    });
+
     return () => {
       unsubscribeUser();
+      unsubscribeOrders();
     };
   }, [user.email, user.isLoggedIn]);
 
@@ -238,7 +239,7 @@ export default function App() {
     if (!user.isLoggedIn || !user.email) return;
 
     saveLocalOrder(newOrder, user.email);
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
 
     if (typeof newBalance === 'number') {
       updateWalletBalance(newBalance, user.email);
@@ -247,20 +248,6 @@ export default function App() {
     } else {
       showToast(`অর্ডার প্লেস করা হয়েছে! খুব দ্রুত ভেরিফাই করে সম্পন্ন করা হবে।`);
     }
-  };
-
-  const handleDeleteOrder = async (orderId: string) => {
-    if (!user.isLoggedIn || !user.email) return;
-    await deleteUserOrder(orderId, user.email);
-    setOrders(prev => prev.filter(o => o.id !== orderId));
-    showToast("অর্ডারটি সফলভাবে মুছে ফেলা হয়েছে।");
-  };
-
-  const handleClearAllOrders = async () => {
-    if (!user.isLoggedIn || !user.email) return;
-    await clearAllUserOrders(user.email);
-    setOrders([]);
-    showToast("সকল অর্ডার হিস্টোরি মুছে ফেলা হয়েছে।");
   };
 
   const handleAddMoneySuccess = (amount: number, reqId?: string) => {
@@ -522,8 +509,6 @@ export default function App() {
               user={user}
               onOpenAuthModal={handleOpenAuthModal}
               onBackToHome={() => setActiveTab('home')}
-              onDeleteOrder={handleDeleteOrder}
-              onClearAllOrders={handleClearAllOrders}
             />
           )}
 
