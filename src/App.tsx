@@ -10,7 +10,9 @@ import {
   Layers,
   Smartphone,
   Monitor,
-  Flame
+  Flame,
+  Bot,
+  ArrowRight
 } from 'lucide-react';
 import { Category, Product, AppSettings, Order, Review, UserProfile } from './types';
 import { FALLBACK_CATEGORIES, FALLBACK_SETTINGS } from './data/fallbackData';
@@ -35,7 +37,7 @@ import { AddMoneyModal } from './components/AddMoneyModal';
 import { OrdersView } from './components/OrdersView';
 import { ProfileView } from './components/ProfileView';
 import { ReviewsView } from './components/ReviewsView';
-import { ResponsiveFixModal } from './components/ResponsiveFixModal';
+import { AiSupportModal } from './components/AiSupportModal';
 import { BottomNav } from './components/BottomNav';
 import { AuthModal } from './components/AuthModal';
 import { ProfilePhotoModal } from './components/ProfilePhotoModal';
@@ -297,28 +299,23 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Responsive Fix Callout Pill on Desktop */}
-              <div className="bg-white dark:bg-[#16181f] border border-amber-200/90 dark:border-amber-800/60 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center flex-shrink-0 font-bold">
-                    <Sparkles className="w-5 h-5" />
+              {/* AI Support Chatbot Box Card (Right below Review button) */}
+              <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 shadow-2xs">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-300 font-bold text-xs sm:text-sm">
+                    <Bot className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    স্টোর চ্যাটবট
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">
-                      ডেক্সটপে ব্যানার ও কার্ড এতো বড় কেন হয়েছিল?
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                      অরিজিনাল কোডে <code>max-width</code> ও <code>@media</code> না থাকায় ১৯২০ পিক্সেল স্ক্রিনে বড় দেখাচ্ছিল।
-                    </p>
-                  </div>
+                  <p className="text-[11px] sm:text-xs text-amber-800/80 dark:text-amber-400/80 leading-snug">
+                    স্টোরের সময়সূচি, পেমেন্ট ও সাপোর্ট সম্পর্কিত তথ্য দেখতে পারেন।
+                  </p>
                 </div>
-
                 <button
                   onClick={() => setIsFixModalOpen(true)}
-                  className="w-full sm:w-auto px-4 py-2 bg-black dark:bg-amber-400 hover:bg-neutral-800 dark:hover:bg-amber-300 text-white dark:text-black rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 flex-shrink-0 shadow-xs"
+                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl text-xs transition flex-shrink-0 flex items-center gap-1 cursor-pointer shadow-2xs"
                 >
-                  <span>কারণ ও Netlify ফিক্স CSS দেখুন</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  চ্যাট শুরু করুন
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -482,6 +479,19 @@ export default function App() {
           onSetTheme={setThemeExplicitly}
         />
 
+        {/* Floating AI Chatbot Button */}
+        <button
+          onClick={() => setIsFixModalOpen(true)}
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 bg-neutral-900 dark:bg-amber-400 text-white dark:text-black p-3 sm:px-4 sm:py-3 rounded-2xl shadow-2xl border border-neutral-700 dark:border-amber-300 flex items-center gap-2 hover:scale-105 active:scale-95 transition cursor-pointer group"
+          title="স্টোর চ্যাটবটের সাথে কথা বলুন"
+        >
+          <div className="relative flex items-center justify-center">
+            <Bot className="w-5 h-5 text-amber-400 dark:text-black" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-neutral-900 dark:border-amber-400 animate-pulse"></span>
+          </div>
+          <span className="hidden sm:inline font-bold text-xs">স্টোর চ্যাটবট</span>
+        </button>
+
         {/* Modals */}
         <ProductModal
           product={selectedProduct}
@@ -503,9 +513,12 @@ export default function App() {
           onAddMoneySuccess={handleAddMoneySuccess}
         />
 
-        <ResponsiveFixModal
+        <AiSupportModal
           isOpen={isFixModalOpen}
           onClose={() => setIsFixModalOpen(false)}
+          reviewsCount={reviews.length}
+          settings={settings}
+          onOpenAddMoney={() => setIsAddMoneyOpen(true)}
         />
 
         {/* Authentication Modal (Login & Registration) */}

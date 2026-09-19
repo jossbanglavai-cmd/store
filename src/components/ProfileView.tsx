@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus, Camera } from 'lucide-react';
+import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus, Camera, Bot } from 'lucide-react';
 import { Order, UserProfile } from '../types';
 
 interface Props {
@@ -182,22 +182,22 @@ export const ProfileView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Responsive Diagnostic Card */}
+      {/* AI Support Chatbot Card */}
       <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-4 flex items-center justify-between gap-4">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-300 font-bold text-sm">
-            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            রেসপনসিভ সমস্যা কেন হয়েছিল এবং Netlify CSS ফিক্স
+            <Bot className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            স্টোর চ্যাটবট
           </div>
           <p className="text-xs text-amber-800/80 dark:text-amber-400/80">
-            ব্যানার ও প্রোডাক্ট কার্ডের সাইজ ঠিক করার সমাধান কোড দেখতে ক্লিক করুন।
+            স্টোরের সময়সূচি, পেমেন্ট ও সাপোর্ট সম্পর্কিত তথ্য দেখতে পারেন।
           </p>
         </div>
         <button
           onClick={onOpenFixModal}
-          className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex-shrink-0 flex items-center gap-1"
+          className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl text-xs transition flex-shrink-0 flex items-center gap-1 cursor-pointer shadow-2xs"
         >
-          সমাধান দেখুন
+          চ্যাট শুরু করুন
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

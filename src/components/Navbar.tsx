@@ -133,20 +133,6 @@ export const Navbar: React.FC<Props> = ({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
-          
-          {/* Responsive Diagnostic & Fix Button */}
-          <button
-            onClick={onOpenFixModal}
-            title="কেন বড় লাগছিল এবং Netlify ফিক্স CSS কোড দেখুন"
-            className="relative flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/70 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition shadow-xs cursor-pointer"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span className="hidden sm:inline font-bold">রেসপনসিভ ফিক্স</span>
-            <span className="sm:hidden font-bold">Fix</span>
-          </button>
 
           {/* Device Mock Toggle */}
           <button

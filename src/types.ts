@@ -42,6 +42,8 @@ export interface AppSettings {
   manualPayImg?: string;
   popupIcon?: string;
   popupUrl?: string;
+  operatingHours?: string;
+  deliverySpeedText?: string;
 }
 
 export interface Order {
