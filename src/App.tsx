@@ -41,6 +41,7 @@ import { AuthModal } from './components/AuthModal';
 import { ProfilePhotoModal } from './components/ProfilePhotoModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
 
+// Fully updated Live Sync Firebase integration for Amar Store with Web SDK support
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
   const [categories, setCategories] = useState<Category[]>(() => {

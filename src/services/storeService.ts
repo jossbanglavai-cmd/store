@@ -496,47 +496,42 @@ const DEFAULT_REVIEWS: Review[] = [
 ];
 
 export async function fetchLiveSettings(): Promise<AppSettings> {
-  // Try fetching fresh data first
+  // Try fetching fresh data via Web SDK first
   try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/app_config/settings`);
-    if (res.ok) {
-      const data = await res.json();
-      const fields = data.fields;
-      if (fields) {
-        const sliderValues = fields.sliderData?.arrayValue?.values || [];
-        const sliderData = sliderValues.map((v: any) => {
-          const m = v.mapValue?.fields || {};
-          return {
-            img: m.img?.stringValue || m.image?.stringValue || "",
-            link: m.link?.stringValue || "",
-          };
-        }).filter((s: any) => s.img);
+    const settingsRef = doc(db, 'app_config', 'settings');
+    const docSnap = await getDoc(settingsRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const rawSlider = data.sliderData || [];
+      const sliderData = rawSlider.map((s: any) => ({
+        img: s.img || s.image || "",
+        link: s.link || "",
+      })).filter((s: any) => s.img);
 
-        const paymentsFields = fields.payments?.mapValue?.fields || {};
+      const payments = data.payments || {};
 
-        const settings: AppSettings = {
-          headerLogo: fields.headerLogo?.stringValue || FALLBACK_SETTINGS.headerLogo,
-          noticeText: fields.noticeText?.stringValue || FALLBACK_SETTINGS.noticeText,
-          favicon: fields.favicon?.stringValue || FALLBACK_SETTINGS.favicon,
-          sliderData: sliderData.length > 0 ? sliderData : FALLBACK_SETTINGS.sliderData,
-          payments: {
-            bkash: paymentsFields.bkash?.stringValue || FALLBACK_SETTINGS.payments.bkash,
-            bkashImg: paymentsFields.bkashImg?.stringValue || FALLBACK_SETTINGS.payments.bkashImg,
-            nagad: paymentsFields.nagad?.stringValue === "🚫 OFF" ? "01770931981" : (paymentsFields.nagad?.stringValue || FALLBACK_SETTINGS.payments.nagad),
-            nagadImg: paymentsFields.nagadImg?.stringValue || FALLBACK_SETTINGS.payments.nagadImg,
-          },
-          walletPayImg: fields.walletPayImg?.stringValue || FALLBACK_SETTINGS.walletPayImg,
-          manualPayImg: fields.manualPayImg?.stringValue || FALLBACK_SETTINGS.manualPayImg,
-          popupIcon: fields.popupIcon?.stringValue || "",
-          popupUrl: fields.popupUrl?.stringValue || "",
-        };
+      const settings: AppSettings = {
+        headerLogo: data.headerLogo || FALLBACK_SETTINGS.headerLogo,
+        noticeText: data.noticeText || FALLBACK_SETTINGS.noticeText,
+        favicon: data.favicon || FALLBACK_SETTINGS.favicon,
+        sliderData: sliderData.length > 0 ? sliderData : FALLBACK_SETTINGS.sliderData,
+        payments: {
+          bkash: payments.bkash || FALLBACK_SETTINGS.payments.bkash,
+          bkashImg: payments.bkashImg || FALLBACK_SETTINGS.payments.bkashImg,
+          nagad: payments.nagad === "🚫 OFF" ? "01770931981" : (payments.nagad || FALLBACK_SETTINGS.payments.nagad),
+          nagadImg: payments.nagadImg || FALLBACK_SETTINGS.payments.nagadImg,
+        },
+        walletPayImg: data.walletPayImg || FALLBACK_SETTINGS.walletPayImg,
+        manualPayImg: data.manualPayImg || FALLBACK_SETTINGS.manualPayImg,
+        popupIcon: data.popupIcon || "",
+        popupUrl: data.popupUrl || "",
+      };
 
-        localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
-        return settings;
-      }
+      localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
+      return settings;
     }
   } catch (err) {
-    console.warn("Failed to fetch fresh live settings, trying local cache", err);
+    console.warn("Failed to fetch fresh settings via Web SDK, trying local cache", err);
   }
 
   // Fallback to cache if offline
@@ -577,64 +572,59 @@ export async function saveLiveSettings(settings: AppSettings): Promise<void> {
 }
 
 export async function fetchLiveCategories(): Promise<Category[]> {
-  // Try fetching fresh data first
+  // Try fetching fresh data via Web SDK first
   try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/categories`);
-    if (res.ok) {
-      const data = await res.json();
-      const docs = data.documents || [];
-      if (docs.length > 0) {
-        const categories: Category[] = docs.map((doc: any) => {
-          const f = doc.fields || {};
-          const catName = f.name?.stringValue || "Category";
-          const priority = Number(f.priority?.integerValue || f.priority?.stringValue || 99);
-          const productValues = f.products?.arrayValue?.values || [];
+    const querySnapshot = await getDocs(collection(db, 'categories'));
+    if (!querySnapshot.empty) {
+      const categories: Category[] = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const catName = data.name || "Category";
+        const priority = Number(data.priority || 99);
+        const rawProducts = data.products || [];
 
-          const products = productValues.map((pv: any) => {
-            const pf = pv.mapValue?.fields || {};
-            const packagesValues = pf.packages?.arrayValue?.values || [];
-            const packages = packagesValues.map((pkg: any) => {
-              const pkf = pkg.mapValue?.fields || {};
-              return {
-                name: pkf.name?.stringValue || "Standard",
-                price: Number(pkf.price?.integerValue || pkf.price?.stringValue || 0),
-              };
-            });
+        const products = rawProducts.map((p: any) => {
+          const rawPackages = p.packages || [];
+          const packages = rawPackages.map((pkg: any) => ({
+            name: pkg.name || "Standard",
+            price: Number(pkg.price || 0),
+          }));
 
-            // Allow fallback format if added by admin panel
-            const prodName = pf.name?.stringValue || pf.title?.stringValue || "Product";
-            const prodPrice = Number(pf.price?.integerValue || pf.price?.stringValue || pf.offerPrice?.integerValue || pf.offerPrice?.stringValue || 0);
-            const finalPackages = packages.length > 0 ? packages : [{ name: pf.duration?.stringValue || "Standard", price: prodPrice }];
-
-            return {
-              name: prodName,
-              image: pf.image?.stringValue || "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg",
-              status: (pf.status?.stringValue === 'out' ? 'out' : 'in') as 'in' | 'out',
-              avgRating: pf.avgRating?.stringValue || pf.avgRating?.doubleValue || "5.0",
-              delivery: pf.delivery?.stringValue || "Instant (5-15 min)",
-              inputLabel: pf.inputLabel?.stringValue || "Player ID / Email",
-              description: pf.description?.stringValue || pf.desc?.stringValue || pf.details?.stringValue || pf.info?.stringValue || pf.rules?.stringValue || pf.productDescription?.stringValue || pf.instruction?.stringValue || "",
-              packages: finalPackages,
-              categoryName: catName,
-            };
-          });
+          const prodName = p.name || p.title || "Product";
+          const prodPrice = Number(p.price || p.offerPrice || 0);
+          const finalPackages = packages.length > 0 ? packages : [{ name: p.duration || "Standard", price: prodPrice }];
 
           return {
-            id: doc.name.split('/').pop(),
-            name: catName,
-            priority,
-            products,
+            name: prodName,
+            image: p.image || "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg",
+            status: (p.status === 'out' ? 'out' : 'in') as 'in' | 'out',
+            avgRating: p.avgRating || "5.0",
+            delivery: p.delivery || "Instant (5-15 min)",
+            inputLabel: p.inputLabel || "Player ID / Email",
+            description: p.description || p.desc || p.details || p.info || p.rules || p.productDescription || p.instruction || "",
+            packages: finalPackages,
+            categoryName: catName,
           };
-        }).sort((a: Category, b: Category) => (a.priority || 99) - (b.priority || 99));
+        });
 
-        if (categories.length > 0) {
-          localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
-          return categories;
-        }
+        categories.push({
+          id: docSnap.id,
+          name: catName,
+          priority,
+          products,
+        });
+      });
+
+      // Sort by priority
+      categories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+
+      if (categories.length > 0) {
+        localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+        return categories;
       }
     }
   } catch (err) {
-    console.warn("Failed to fetch fresh live categories, trying local cache", err);
+    console.warn("Failed to fetch fresh live categories via Web SDK, trying local cache", err);
   }
 
   // Fallback to cache if offline
