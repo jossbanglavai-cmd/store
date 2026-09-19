@@ -121,11 +121,6 @@ export const Navbar: React.FC<Props> = ({
           >
             <div className="relative">
               <Star className="w-5 h-5 mb-0.5 fill-amber-400 text-amber-400" />
-              {reviewsCount > 0 && (
-                <span className="absolute -top-1.5 -right-2.5 bg-amber-400 text-amber-950 text-[9px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center border border-amber-300">
-                  {reviewsCount}
-                </span>
-              )}
             </div>
             <span className="text-[11px] leading-tight">রিভিউ</span>
           </button>

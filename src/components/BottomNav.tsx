@@ -116,11 +116,6 @@ export const BottomNav: React.FC<Props> = ({
                 : 'text-gray-500 dark:text-gray-400'
             }`} />
           </div>
-          {reviewsCount > 0 && (
-            <span className="absolute -top-0.5 -right-1.5 bg-amber-400 text-amber-950 text-[9px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-xs">
-              {reviewsCount}
-            </span>
-          )}
         </div>
         <span className="text-[11px] font-medium leading-none">রিভিউ</span>
       </button>

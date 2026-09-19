@@ -72,6 +72,7 @@ export interface Review {
   status?: string;
   timestamp?: string;
   dateFormatted?: string;
+  helpfulCount?: number;
 }
 
 export interface UserProfile {

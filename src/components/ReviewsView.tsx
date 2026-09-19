@@ -28,6 +28,11 @@ interface Props {
   onOpenAuthModal?: (mode?: 'login' | 'register') => void;
 }
 
+function toBanglaNum(num: number): string {
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(num).replace(/\d/g, (d) => banglaDigits[Number(d)]);
+}
+
 export const ReviewsView: React.FC<Props> = ({
   reviews,
   onAddReview,
@@ -38,7 +43,28 @@ export const ReviewsView: React.FC<Props> = ({
 }) => {
   const [filterRating, setFilterRating] = useState<number | 'all'>('all');
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [helpfulMap, setHelpfulMap] = useState<Record<string, boolean>>({});
+  
+  // Persistent user voted state (which reviews this device/user has liked)
+  const [helpfulMap, setHelpfulMap] = useState<Record<string, boolean>>(() => {
+    try {
+      // Clear out old fake count data if present in localStorage
+      localStorage.removeItem('amar_store_helpful_counts');
+      const stored = localStorage.getItem('amar_store_user_helpful_votes');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Real helpful counts per review ID (starts at 0 unless voted)
+  const [helpfulCountsMap, setHelpfulCountsMap] = useState<Record<string, number>>(() => {
+    try {
+      const stored = localStorage.getItem('amar_store_real_helpful_counts');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // Write review form state
   const [productName, setProductName] = useState(productNames[0] || 'Netflix');
@@ -104,11 +130,36 @@ export const ReviewsView: React.FC<Props> = ({
   const isCurrentProductReviewed = userReviewedProducts.has(productName.trim().toLowerCase());
   const allProductsReviewed = productNames.length > 0 && availableProducts.length === 0;
 
-  const handleHelpful = (id: string) => {
-    setHelpfulMap(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+  const getHelpfulCount = (review: Review) => {
+    return helpfulCountsMap[review.id] || 0;
+  };
+
+  const handleHelpful = (id: string, review: Review) => {
+    const isCurrentlyHelpful = !!helpfulMap[id];
+    const currentCount = getHelpfulCount(review);
+    const newCount = isCurrentlyHelpful 
+      ? Math.max(0, currentCount - 1) 
+      : currentCount + 1;
+    
+    const newHelpfulMap = {
+      ...helpfulMap,
+      [id]: !isCurrentlyHelpful
+    };
+
+    const newCountsMap = {
+      ...helpfulCountsMap,
+      [id]: newCount
+    };
+
+    setHelpfulMap(newHelpfulMap);
+    setHelpfulCountsMap(newCountsMap);
+
+    try {
+      localStorage.setItem('amar_store_user_helpful_votes', JSON.stringify(newHelpfulMap));
+      localStorage.setItem('amar_store_real_helpful_counts', JSON.stringify(newCountsMap));
+    } catch (e) {
+      console.warn("Could not save helpful votes to localStorage", e);
+    }
   };
 
   const handleOpenWriteReview = () => {
@@ -295,7 +346,7 @@ export const ReviewsView: React.FC<Props> = ({
               : 'bg-white dark:bg-[#16181f] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
           }`}
         >
-          সব রিভিউ ({totalReviews})
+          সব রিভিউ
         </button>
         <button
           onClick={() => setFilterRating(5)}
@@ -326,7 +377,9 @@ export const ReviewsView: React.FC<Props> = ({
       {/* Review Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {filteredReviews.map((review) => {
-          const isHelpful = helpfulMap[review.id];
+          const isHelpful = !!helpfulMap[review.id];
+          const count = getHelpfulCount(review);
+          const countDisplay = toBanglaNum(count);
           return (
             <div
               key={review.id}
@@ -398,15 +451,15 @@ export const ReviewsView: React.FC<Props> = ({
                   ভেরিফাইড পারচেজ
                 </span>
                 <button
-                  onClick={() => handleHelpful(review.id)}
-                  className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                  onClick={() => handleHelpful(review.id, review)}
+                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${
                     isHelpful
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 font-semibold'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'
+                      ? 'bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800 shadow-2xs'
+                      : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200/80 dark:border-gray-700/60'
                   }`}
                 >
                   <ThumbsUp className={`w-3.5 h-3.5 ${isHelpful ? 'fill-blue-600 dark:fill-blue-400' : ''}`} />
-                  <span>{isHelpful ? 'সহায়ক (১)' : 'সহায়ক'}</span>
+                  <span>{count > 0 ? `সহায়ক (${countDisplay})` : 'সহায়ক'}</span>
                 </button>
               </div>
             </div>
