@@ -37,7 +37,7 @@ export const ProfileView: React.FC<Props> = ({
           <div className="space-y-1 max-w-md mx-auto">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">লগইন অথবা অ্যাকাউন্ট তৈরি করুন</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              ব্যালেন্স রিচার্জ, অর্ডার হিস্ট্রি এবং কেনাকাটা সম্পন্ন করতে আপনার অ্যাকাউন্টে লগইন করুন।
+              ব্যালেন্স অ্যাড, অর্ডার হিস্ট্রি এবং কেনাকাটা সম্পন্ন করতে আপনার অ্যাকাউন্টে লগইন করুন।
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
@@ -114,15 +114,12 @@ export const ProfileView: React.FC<Props> = ({
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              আইডি: <span className="font-mono font-semibold text-gray-700 dark:text-gray-200">{user.memberId}</span> | ইমেইল: <span className="font-mono text-gray-700 dark:text-gray-200">{user.email}</span>
+              ইমেইল: <span className="font-mono text-gray-700 dark:text-gray-200">{user.email}</span>
             </p>
 
             <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start items-center">
               <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
                 Verified Account
-              </span>
-              <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-                bKash / Nagad Ready
               </span>
             </div>
           </div>
@@ -132,7 +129,7 @@ export const ProfileView: React.FC<Props> = ({
             className="px-4 py-2 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-gray-200 text-white dark:text-black text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Wallet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-            টাকা যোগ করুন
+            টাকা অ্যাড করুন
           </button>
         </div>
       )}

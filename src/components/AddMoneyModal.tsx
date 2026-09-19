@@ -83,8 +83,8 @@ export const AddMoneyModal: React.FC<Props> = ({
               <Wallet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold font-heading">ওয়ালেটে টাকা যোগ করুন (Add Money)</h2>
-              <p className="text-xs text-neutral-400">bKash বা Nagad দিয়ে সাথে সাথে রিচার্জ করুন</p>
+              <h2 className="text-lg font-bold font-heading">ওয়ালেটে টাকা অ্যাড করুন</h2>
+              <p className="text-xs text-neutral-400">bKash বা Nagad দিয়ে টাকা অ্যাড করুন</p>
             </div>
           </div>
           <button
@@ -223,11 +223,11 @@ export const AddMoneyModal: React.FC<Props> = ({
             ) : !user.isLoggedIn ? (
               <>
                 <LogIn className="w-4 h-4 text-amber-400" />
-                <span>টাকা যোগ করতে লগইন বা অ্যাকাউন্ট তৈরি করুন</span>
+                <span>টাকা অ্যাড করতে লগইন বা অ্যাকাউন্ট তৈরি করুন</span>
               </>
             ) : (
               <>
-                <span>টাকা যোগের অনুরোধ পাঠান</span>
+                <span>টাকা অ্যাড করুন</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

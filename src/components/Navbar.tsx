@@ -172,7 +172,7 @@ export const Navbar: React.FC<Props> = ({
             <button
               onClick={onOpenAddMoney}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-gray-100 transition text-xs sm:text-sm font-semibold shadow-xs cursor-pointer"
-              title="টাকা যোগ করতে ক্লিক করুন"
+              title="টাকা অ্যাড করতে ক্লিক করুন"
             >
               <Wallet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
               <span>৳{balance}</span>
