@@ -1494,13 +1494,38 @@
 
         let html = '';
         users.forEach(u => {
-          const profilePhoto = u.photoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+          const profilePhoto = (u.photoUrl || u.photo || u.photoURL || u.image || u.avatar || u.userPhoto || '').trim();
           const joinTime = u.createdAt ? new Date(u.createdAt).toLocaleDateString('bn-BD') : 'অজানা';
+          const userName = u.name || 'সম্মানিত ইউজার';
+          const initial = (userName || u.email || 'U').charAt(0).toUpperCase();
+          
           html += `
             <tr class="border-b border-slate-800 hover:bg-slate-950/20">
-              <td class="p-3 flex items-center gap-2">
-                <img src="${profilePhoto}" class="w-8 h-8 rounded-full border border-slate-700 object-cover">
-                <span class="font-bold text-white">${u.name || 'সম্মানিত ইউজার'}</span>
+              <td class="p-3">
+                <div class="flex items-center gap-3">
+                  ${profilePhoto ? `
+                    <div class="relative group cursor-pointer" onclick="viewFullImageModal('${profilePhoto}', '${userName.replace(/'/g, "\\'")}')" title="ছবি বড় করে দেখুন">
+                      <img 
+                        src="${profilePhoto}" 
+                        alt="${userName}"
+                        class="w-10 h-10 rounded-full border-2 border-amber-500/40 object-cover shadow-md group-hover:scale-105 transition duration-150"
+                        onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-amber-400 font-bold text-sm shadow-sm\\'>${initial}</div>';"
+                      >
+                      <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full" title="সক্রিয় প্রোফাইল ছবি"></span>
+                    </div>
+                  ` : `
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 flex items-center justify-center text-amber-400 font-bold text-sm shadow-sm">
+                      ${initial}
+                    </div>
+                  `}
+                  <div>
+                    <div class="font-bold text-white flex items-center gap-1.5">
+                      <span>${userName}</span>
+                      ${profilePhoto ? '<span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">ছবি যুক্ত</span>' : ''}
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-mono">${u.phone || 'ফোন নম্বর নেই'}</div>
+                  </div>
+                </div>
               </td>
               <td class="p-3 font-mono">${u.email}</td>
               <td class="p-3 font-mono text-slate-400 text-xs">${u.memberId || 'N/A'}</td>
@@ -1747,14 +1772,31 @@
         let html = '';
         reviews.forEach(r => {
           const status = r.status || 'Approved';
-          const profilePhoto = r.userPhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+          const profilePhoto = (r.userPhoto || r.photoUrl || r.photoURL || r.photo || '').trim();
           const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+          const reviewerName = r.userName || 'সম্মানিত গ্রাহক';
+          const initial = reviewerName.charAt(0).toUpperCase();
           
           html += `
             <tr class="border-b border-slate-800 hover:bg-slate-950/20">
-              <td class="p-3 flex items-center gap-2">
-                <img src="${profilePhoto}" class="w-8 h-8 rounded-full border border-slate-700 object-cover">
-                <span class="font-bold text-white">${r.userName || 'গ্রাহক'}</span>
+              <td class="p-3 flex items-center gap-2.5">
+                ${profilePhoto ? `
+                  <img 
+                    src="${profilePhoto}" 
+                    alt="${reviewerName}"
+                    onclick="viewFullImageModal('${profilePhoto}', '${reviewerName.replace(/'/g, "\\'")}')"
+                    class="w-9 h-9 rounded-full border border-amber-500/30 object-cover cursor-pointer hover:scale-105 transition"
+                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 font-bold text-xs\\'>${initial}</div>';"
+                  >
+                ` : `
+                  <div class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 font-bold text-xs">
+                    ${initial}
+                  </div>
+                `}
+                <div>
+                  <span class="font-bold text-white text-sm">${reviewerName}</span>
+                  ${r.userEmail ? `<div class="text-[10px] text-slate-400 font-mono">${r.userEmail}</div>` : ''}
+                </div>
               </td>
               <td class="p-3 font-semibold text-slate-200">${r.productName || 'Amar Store'}</td>
               <td class="p-3 text-amber-400 font-bold">${stars}</td>
@@ -1805,8 +1847,51 @@
       }
     }
 
+    function viewFullImageModal(imageUrl, title) {
+      if (!imageUrl) return;
+      const modal = document.getElementById('imagePreviewModal');
+      const img = document.getElementById('previewModalImg');
+      const caption = document.getElementById('previewModalCaption');
+      if (modal && img) {
+        img.src = imageUrl;
+        if (caption) caption.textContent = title || 'প্রোফাইল ছবি';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } else {
+        window.open(imageUrl, '_blank');
+      }
+    }
+
+    function closeFullImageModal() {
+      const modal = document.getElementById('imagePreviewModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
     // RUN ON BOOT
     checkPreviousLogin();
   </script>
+
+  <!-- Image Lightbox Modal -->
+  <div id="imagePreviewModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="closeFullImageModal()">
+    <div class="relative max-w-sm w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 overflow-hidden shadow-2xl text-center space-y-3" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h4 id="previewModalCaption" class="text-sm font-bold text-white truncate">প্রোফাইল ছবি</h4>
+        <button onclick="closeFullImageModal()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-amber-500/40 shadow-lg bg-slate-950 flex items-center justify-center">
+        <img id="previewModalImg" src="" alt="Profile" class="w-full h-full object-cover">
+      </div>
+      <div class="pt-1">
+        <button onclick="closeFullImageModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2 rounded-xl">
+          বন্ধ করুন
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
