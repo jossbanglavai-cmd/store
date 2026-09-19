@@ -8,8 +8,6 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Layers,
-  Smartphone,
-  Monitor,
   Flame,
   Bot,
   ArrowRight
@@ -200,31 +198,10 @@ export default function App() {
   });
 
   return (
-    <div className={`min-h-screen bg-[#f4f6f9] dark:bg-[#0b0d12] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-200 ${deviceMode === 'mobile-mock' ? 'items-center py-6 px-2 bg-neutral-900' : ''}`}>
+    <div className="min-h-screen bg-[#f4f6f9] dark:bg-[#0b0d12] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-200">
       
-      {/* Device Mode banner when simulating mobile */}
-      {deviceMode === 'mobile-mock' && (
-        <div className="w-full max-w-[420px] mb-3 flex items-center justify-between text-white text-xs px-2">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-emerald-400" />
-            <span className="font-semibold">মোবাইল ফ্রেম সিমুলেশন (390px)</span>
-          </div>
-          <button
-            onClick={() => setDeviceMode('responsive')}
-            className="text-xs text-blue-300 hover:text-white underline font-semibold flex items-center gap-1"
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            ডেক্সটপ ফুলস্ক্রিন
-          </button>
-        </div>
-      )}
-
       {/* Main Container Wrapper */}
-      <div className={`w-full flex-1 flex flex-col transition-all duration-300 ${
-        deviceMode === 'mobile-mock' 
-          ? 'max-w-[410px] min-h-[844px] bg-[#f4f6f9] dark:bg-[#0b0d12] rounded-3xl shadow-2xl overflow-hidden border-4 border-neutral-700 relative pb-16' 
-          : 'pb-20 md:pb-10'
-      }`}>
+      <div className="w-full flex-1 flex flex-col transition-all duration-300 pb-20 md:pb-10">
         
         {/* Navigation */}
         <Navbar

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, Smartphone, Monitor, ShieldCheck, Star, LogIn, Moon, Sun } from 'lucide-react';
+import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, ShieldCheck, Star, LogIn, Moon, Sun } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -133,25 +133,6 @@ export const Navbar: React.FC<Props> = ({
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
-
-          {/* Device Mock Toggle */}
-          <button
-            onClick={() => setDeviceMode(deviceMode === 'responsive' ? 'mobile-mock' : 'responsive')}
-            title={deviceMode === 'responsive' ? "মোবাইল ফ্রেম ভিউ টেস্ট করুন" : "ফুল রেসপনসিভ ভিউতে ফিরুন"}
-            className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-1"
-          >
-            {deviceMode === 'responsive' ? (
-              <>
-                <Smartphone className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                <span className="hidden lg:inline">Mobile Preview</span>
-              </>
-            ) : (
-              <>
-                <Monitor className="w-4 h-4 text-blue-500" />
-                <span className="hidden lg:inline text-blue-500 font-semibold">Desktop Full</span>
-              </>
-            )}
-          </button>
 
           {/* Wallet Balance Pill - Only shown when logged in */}
           {user?.isLoggedIn && (
