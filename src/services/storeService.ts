@@ -432,68 +432,7 @@ export function logoutUser(): UserProfile {
 }
 
 
-const DEFAULT_REVIEWS: Review[] = [
-  {
-    id: "rev-1",
-    userName: "Rayhan Sultan",
-    userPhoto: "https://i.ibb.co/dJX1rwzn/photo-1708581939764-89af474a1dff.jpg",
-    productName: "Netflix",
-    rating: 5,
-    comment: "Honestly Amar Store এর সার্ভিস অনেক ভালো লেগেছে। Netflix একদম দ্রুত ডেলিভারি দিয়েছে এবং একাউন্ট পারফেক্টভাবে কাজ করছে।",
-    status: "Approved",
-    dateFormatted: "1 দিন আগে"
-  },
-  {
-    id: "rev-2",
-    userName: "Mahira Chowdhury",
-    userPhoto: "https://i.ibb.co/Wv5RxRsg/photo-1650603697840-f3cfca6bcc2d.jpg",
-    productName: "Netflix",
-    rating: 5,
-    comment: "এক কথায় দারুণ সার্ভিস! Netflix একাউন্ট খুব দ্রুত পেয়েছি এবং ব্যবহার করেও অনেক ভালো লাগছে 🌸",
-    status: "Approved",
-    dateFormatted: "2 দিন আগে"
-  },
-  {
-    id: "rev-3",
-    userName: "Farhan Reza",
-    userPhoto: "https://i.ibb.co/rGy4z0vz/photo-1741441030950-11897c485dfc.jpg",
-    productName: "Netflix",
-    rating: 5,
-    comment: "প্রথমবার Amar Store থেকে কিনলাম এবং এক্সপেরিয়েন্স অনেক ভালো ছিল। কয়েক মিনিটের মধ্যেই পেয়ে গেছি।",
-    status: "Approved",
-    dateFormatted: "3 দিন আগে"
-  },
-  {
-    id: "rev-4",
-    userName: "Nafis Tahmid",
-    userPhoto: "https://i.ibb.co/MD5gXPC7/photo-1636546113525-47c298b119ef.jpg",
-    productName: "Crunchyroll",
-    rating: 5,
-    comment: "Crunchyroll ও Netflix নেওয়ার জন্য আমার স্টোর কে অবশ্যই রেকমেন্ড করবো। খুব দ্রুত একাউন্ট পেয়েছি আর সাপোর্টও ছিল অসাধারণ!",
-    status: "Approved",
-    dateFormatted: "4 দিন আগে"
-  },
-  {
-    id: "rev-5",
-    userName: "Fariha Ahmed",
-    userPhoto: "https://i.ibb.co/chBWkQgV/FB-IMG-1779868481911.jpg",
-    productName: "WhatsApp BD",
-    rating: 5,
-    comment: "অর্ডার করার পর খুব কম সময়ে ডেলিভারি পেয়েছি। আমার স্টোর সত্যিই অনেক ভালো সার্ভিস দেয় 👍",
-    status: "Approved",
-    dateFormatted: "5 দিন আগে"
-  },
-  {
-    id: "rev-6",
-    userName: "Adnan Chowdhury",
-    userPhoto: "https://i.ibb.co/LdB2tfMS/photo-1777719202738-f9face4b7d9b.jpg",
-    productName: "Outlook",
-    rating: 5,
-    comment: "Amar Store থেকে ডিজিটাল অ্যাকাউন্ট নেওয়ার অভিজ্ঞতা দারুণ ছিল। পেমেন্ট করার কিছুক্ষণের মধ্যেই পেয়ে গেছি। সার্ভিস খুবই ফাস্ট এবং রিলায়েবল।",
-    status: "Approved",
-    dateFormatted: "1 সপ্তাহ আগে"
-  }
-];
+const DEFAULT_REVIEWS: Review[] = [];
 
 export async function fetchLiveSettings(): Promise<AppSettings> {
   // Try fetching fresh data via Web SDK first
@@ -735,19 +674,17 @@ export async function fetchLiveReviews(): Promise<Review[]> {
   } catch {}
 
   try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/reviews`);
-    if (!res.ok) {
+    const querySnapshot = await getDocs(collection(db, 'reviews'));
+    if (querySnapshot.empty) {
       return DEFAULT_REVIEWS;
     }
-    const data = await res.json();
-    const docs = data.documents || [];
-    if (docs.length === 0) return DEFAULT_REVIEWS;
 
-    const remoteReviews: Review[] = docs.map((doc: any) => {
-      const f = doc.fields || {};
-      const id = doc.name.split('/').pop() || Math.random().toString();
-      const rating = Number(f.rating?.integerValue || f.rating?.doubleValue || 5);
-      const timestamp = f.timestamp?.timestampValue || doc.createTime;
+    const remoteReviews: Review[] = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+      const rating = Number(data.rating || 5);
+      const timestamp = data.timestamp || new Date().toISOString();
       
       let dateFormatted = "সাম্প্রতিক";
       if (timestamp) {
@@ -758,22 +695,23 @@ export async function fetchLiveReviews(): Promise<Review[]> {
         else dateFormatted = `${Math.floor(diffDays / 7)} সপ্তাহ আগে`;
       }
 
-      return {
+      remoteReviews.push({
         id,
-        userName: f.userName?.stringValue || "সম্মানিত গ্রাহক",
-        userPhoto: f.userPhoto?.stringValue || "",
-        productName: f.productName?.stringValue || "Amar Store",
+        userName: data.userName || "সম্মানিত গ্রাহক",
+        userPhoto: data.userPhoto || "",
+        productName: data.productName || "Amar Store",
         rating,
-        comment: f.comment?.stringValue || "",
-        status: f.status?.stringValue || "Approved",
+        comment: data.comment || "",
+        status: data.status || "Approved",
         timestamp,
         dateFormatted
-      };
-    }).filter((r: Review) => r.comment);
+      });
+    });
 
-    if (remoteReviews.length > 0) {
-      localStorage.setItem(REVIEWS_KEY, JSON.stringify(remoteReviews));
-      return remoteReviews;
+    const filtered = remoteReviews.filter((r: Review) => r.comment);
+    if (filtered.length > 0) {
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify(filtered));
+      return filtered;
     }
     return DEFAULT_REVIEWS;
   } catch (err) {

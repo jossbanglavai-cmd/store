@@ -145,6 +145,17 @@ export default function App() {
 
   // Load live data
   useEffect(() => {
+    // One-time cache reset to wipe old demo cache for all users
+    const versionKey = 'amar_store_cache_reset_v4';
+    if (localStorage.getItem(versionKey) !== 'true') {
+      localStorage.removeItem('amar_store_live_categories');
+      localStorage.removeItem('amar_store_live_settings');
+      localStorage.removeItem('amar_store_user_reviews');
+      localStorage.setItem(versionKey, 'true');
+      window.location.reload();
+      return;
+    }
+
     async function loadData() {
       try {
         const [liveSettings, liveCategories, liveReviews] = await Promise.all([
@@ -153,12 +164,8 @@ export default function App() {
           fetchLiveReviews(),
         ]);
         setSettings(liveSettings);
-        if (liveCategories.length > 0) {
-          setCategories(liveCategories);
-        }
-        if (liveReviews.length > 0) {
-          setReviews(liveReviews);
-        }
+        setCategories(liveCategories);
+        setReviews(liveReviews);
       } catch (err) {
         console.warn("Using fallback store data", err);
       }
