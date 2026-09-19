@@ -128,18 +128,6 @@ export const Navbar: React.FC<Props> = ({
             </div>
             <span className="text-[11px] leading-tight">রিভিউ</span>
           </button>
-
-          {/* Admin Button for Admin Email */}
-          {user?.email === 'trxrafiff@gmail.com' && (
-            <button
-              onClick={onOpenAdmin}
-              className="px-3.5 py-1.5 rounded-xl flex flex-col items-center justify-center min-w-[66px] transition cursor-pointer bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 font-bold"
-              title="অ্যাডমিন প্যানেল"
-            >
-              <ShieldCheck className="w-5 h-5 mb-0.5 stroke-[2.2]" />
-              <span className="text-[11px] leading-tight">অ্যাডমিন</span>
-            </button>
-          )}
         </nav>
 
         {/* Right Actions */}

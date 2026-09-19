@@ -496,6 +496,50 @@ const DEFAULT_REVIEWS: Review[] = [
 ];
 
 export async function fetchLiveSettings(): Promise<AppSettings> {
+  // Try fetching fresh data first
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/app_config/settings`);
+    if (res.ok) {
+      const data = await res.json();
+      const fields = data.fields;
+      if (fields) {
+        const sliderValues = fields.sliderData?.arrayValue?.values || [];
+        const sliderData = sliderValues.map((v: any) => {
+          const m = v.mapValue?.fields || {};
+          return {
+            img: m.img?.stringValue || m.image?.stringValue || "",
+            link: m.link?.stringValue || "",
+          };
+        }).filter((s: any) => s.img);
+
+        const paymentsFields = fields.payments?.mapValue?.fields || {};
+
+        const settings: AppSettings = {
+          headerLogo: fields.headerLogo?.stringValue || FALLBACK_SETTINGS.headerLogo,
+          noticeText: fields.noticeText?.stringValue || FALLBACK_SETTINGS.noticeText,
+          favicon: fields.favicon?.stringValue || FALLBACK_SETTINGS.favicon,
+          sliderData: sliderData.length > 0 ? sliderData : FALLBACK_SETTINGS.sliderData,
+          payments: {
+            bkash: paymentsFields.bkash?.stringValue || FALLBACK_SETTINGS.payments.bkash,
+            bkashImg: paymentsFields.bkashImg?.stringValue || FALLBACK_SETTINGS.payments.bkashImg,
+            nagad: paymentsFields.nagad?.stringValue === "🚫 OFF" ? "01770931981" : (paymentsFields.nagad?.stringValue || FALLBACK_SETTINGS.payments.nagad),
+            nagadImg: paymentsFields.nagadImg?.stringValue || FALLBACK_SETTINGS.payments.nagadImg,
+          },
+          walletPayImg: fields.walletPayImg?.stringValue || FALLBACK_SETTINGS.walletPayImg,
+          manualPayImg: fields.manualPayImg?.stringValue || FALLBACK_SETTINGS.manualPayImg,
+          popupIcon: fields.popupIcon?.stringValue || "",
+          popupUrl: fields.popupUrl?.stringValue || "",
+        };
+
+        localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
+        return settings;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to fetch fresh live settings, trying local cache", err);
+  }
+
+  // Fallback to cache if offline
   try {
     const cached = localStorage.getItem('amar_store_live_settings');
     if (cached) {
@@ -504,44 +548,7 @@ export async function fetchLiveSettings(): Promise<AppSettings> {
     }
   } catch {}
 
-  try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/app_config/settings`);
-    if (!res.ok) return FALLBACK_SETTINGS;
-    const data = await res.json();
-    const fields = data.fields;
-    if (!fields) return FALLBACK_SETTINGS;
-
-    const sliderValues = fields.sliderData?.arrayValue?.values || [];
-    const sliderData = sliderValues.map((v: any) => ({
-      img: v.mapValue?.fields?.img?.stringValue || "",
-      link: v.mapValue?.fields?.link?.stringValue || "",
-    })).filter((s: any) => s.img);
-
-    const paymentsFields = fields.payments?.mapValue?.fields || {};
-
-    const settings: AppSettings = {
-      headerLogo: fields.headerLogo?.stringValue || FALLBACK_SETTINGS.headerLogo,
-      noticeText: fields.noticeText?.stringValue || FALLBACK_SETTINGS.noticeText,
-      favicon: fields.favicon?.stringValue || FALLBACK_SETTINGS.favicon,
-      sliderData: sliderData.length > 0 ? sliderData : FALLBACK_SETTINGS.sliderData,
-      payments: {
-        bkash: paymentsFields.bkash?.stringValue || FALLBACK_SETTINGS.payments.bkash,
-        bkashImg: paymentsFields.bkashImg?.stringValue || FALLBACK_SETTINGS.payments.bkashImg,
-        nagad: paymentsFields.nagad?.stringValue === "🚫 OFF" ? "01770931981" : (paymentsFields.nagad?.stringValue || FALLBACK_SETTINGS.payments.nagad),
-        nagadImg: paymentsFields.nagadImg?.stringValue || FALLBACK_SETTINGS.payments.nagadImg,
-      },
-      walletPayImg: fields.walletPayImg?.stringValue || FALLBACK_SETTINGS.walletPayImg,
-      manualPayImg: fields.manualPayImg?.stringValue || FALLBACK_SETTINGS.manualPayImg,
-      popupIcon: fields.popupIcon?.stringValue || "",
-      popupUrl: fields.popupUrl?.stringValue || "",
-    };
-
-    localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
-    return settings;
-  } catch (err) {
-    console.warn("Failed to fetch live settings from Firestore, using fallback", err);
-    return FALLBACK_SETTINGS;
-  }
+  return FALLBACK_SETTINGS;
 }
 
 export async function saveLiveSettings(settings: AppSettings): Promise<void> {
@@ -570,6 +577,67 @@ export async function saveLiveSettings(settings: AppSettings): Promise<void> {
 }
 
 export async function fetchLiveCategories(): Promise<Category[]> {
+  // Try fetching fresh data first
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/categories`);
+    if (res.ok) {
+      const data = await res.json();
+      const docs = data.documents || [];
+      if (docs.length > 0) {
+        const categories: Category[] = docs.map((doc: any) => {
+          const f = doc.fields || {};
+          const catName = f.name?.stringValue || "Category";
+          const priority = Number(f.priority?.integerValue || f.priority?.stringValue || 99);
+          const productValues = f.products?.arrayValue?.values || [];
+
+          const products = productValues.map((pv: any) => {
+            const pf = pv.mapValue?.fields || {};
+            const packagesValues = pf.packages?.arrayValue?.values || [];
+            const packages = packagesValues.map((pkg: any) => {
+              const pkf = pkg.mapValue?.fields || {};
+              return {
+                name: pkf.name?.stringValue || "Standard",
+                price: Number(pkf.price?.integerValue || pkf.price?.stringValue || 0),
+              };
+            });
+
+            // Allow fallback format if added by admin panel
+            const prodName = pf.name?.stringValue || pf.title?.stringValue || "Product";
+            const prodPrice = Number(pf.price?.integerValue || pf.price?.stringValue || pf.offerPrice?.integerValue || pf.offerPrice?.stringValue || 0);
+            const finalPackages = packages.length > 0 ? packages : [{ name: pf.duration?.stringValue || "Standard", price: prodPrice }];
+
+            return {
+              name: prodName,
+              image: pf.image?.stringValue || "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg",
+              status: (pf.status?.stringValue === 'out' ? 'out' : 'in') as 'in' | 'out',
+              avgRating: pf.avgRating?.stringValue || pf.avgRating?.doubleValue || "5.0",
+              delivery: pf.delivery?.stringValue || "Instant (5-15 min)",
+              inputLabel: pf.inputLabel?.stringValue || "Player ID / Email",
+              description: pf.description?.stringValue || pf.desc?.stringValue || pf.details?.stringValue || pf.info?.stringValue || pf.rules?.stringValue || pf.productDescription?.stringValue || pf.instruction?.stringValue || "",
+              packages: finalPackages,
+              categoryName: catName,
+            };
+          });
+
+          return {
+            id: doc.name.split('/').pop(),
+            name: catName,
+            priority,
+            products,
+          };
+        }).sort((a: Category, b: Category) => (a.priority || 99) - (b.priority || 99));
+
+        if (categories.length > 0) {
+          localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+          return categories;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to fetch fresh live categories, trying local cache", err);
+  }
+
+  // Fallback to cache if offline
   try {
     const cached = localStorage.getItem('amar_store_live_categories');
     if (cached) {
@@ -578,60 +646,7 @@ export async function fetchLiveCategories(): Promise<Category[]> {
     }
   } catch {}
 
-  try {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/categories`);
-    if (!res.ok) return FALLBACK_CATEGORIES;
-    const data = await res.json();
-    const docs = data.documents || [];
-    if (docs.length === 0) return FALLBACK_CATEGORIES;
-
-    const categories: Category[] = docs.map((doc: any) => {
-      const f = doc.fields || {};
-      const catName = f.name?.stringValue || "Category";
-      const priority = Number(f.priority?.integerValue || f.priority?.stringValue || 99);
-      const productValues = f.products?.arrayValue?.values || [];
-
-      const products = productValues.map((pv: any) => {
-        const pf = pv.mapValue?.fields || {};
-        const packagesValues = pf.packages?.arrayValue?.values || [];
-        const packages = packagesValues.map((pkg: any) => {
-          const pkf = pkg.mapValue?.fields || {};
-          return {
-            name: pkf.name?.stringValue || "Standard",
-            price: Number(pkf.price?.integerValue || pkf.price?.stringValue || 0),
-          };
-        });
-
-        return {
-          name: pf.name?.stringValue || "Product",
-          image: pf.image?.stringValue || "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg",
-          status: (pf.status?.stringValue === 'out' ? 'out' : 'in') as 'in' | 'out',
-          avgRating: pf.avgRating?.stringValue || pf.avgRating?.doubleValue || "5.0",
-          delivery: pf.delivery?.stringValue || "Instant (5-15 min)",
-          inputLabel: pf.inputLabel?.stringValue || "Player ID / Email",
-          description: pf.description?.stringValue || pf.desc?.stringValue || pf.details?.stringValue || pf.info?.stringValue || pf.rules?.stringValue || pf.productDescription?.stringValue || pf.instruction?.stringValue || "",
-          packages: packages.length > 0 ? packages : [{ name: "Standard", price: 100 }],
-          categoryName: catName,
-        };
-      });
-
-      return {
-        id: doc.name,
-        name: catName,
-        priority,
-        products,
-      };
-    }).sort((a: Category, b: Category) => (a.priority || 99) - (b.priority || 99));
-
-    if (categories.length > 0) {
-      localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
-      return categories;
-    }
-    return FALLBACK_CATEGORIES;
-  } catch (err) {
-    console.warn("Failed to fetch live categories from Firestore, using fallback", err);
-    return FALLBACK_CATEGORIES;
-  }
+  return FALLBACK_CATEGORIES;
 }
 
 export async function saveLiveCategories(categories: Category[]): Promise<void> {

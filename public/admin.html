@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amar Store - Admin Panel (অ্যাডমিন প্যানেল)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="min-h-screen pb-12">
+
+  <!-- PASSWORD LOGIN MODAL -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+      <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-amber-400 text-2xl">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-white text-center mb-1">অ্যাডমিন লগইন</h2>
+      <p class="text-slate-400 text-sm text-center mb-6">ফায়ারবেস সিকিউরিটি রুলসের সাথে সুরক্ষিত লাইভ অ্যাক্সেস</p>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">অ্যাডমিন ইমেইল (Admin Email)</label>
+          <input type="email" id="adminEmailInput" value="trxrafiff@gmail.com" placeholder="অ্যাডমিন ইমেইল লিখুন"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm font-semibold">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">অ্যাডমিন পাসওয়ার্ড (Admin Password)</label>
+          <input type="password" id="adminPassInput" placeholder="ফায়ারবেস অ্যাডমিন পাসওয়ার্ড লিখুন"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm font-semibold">
+        </div>
+        <p id="loginError" class="text-red-400 text-xs hidden text-center"></p>
+        <button id="loginBtn" onclick="checkAdminPassword()"
+          class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center">
+          লগইন করুন <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 text-center mt-6">রুলস অনুযায়ী <span class="text-amber-400 font-mono">trxrafiff@gmail.com</span> একাউন্টের পাসওয়ার্ড ব্যবহার করুন।</p>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN CONTAINER -->
+  <div id="adminMainContent" class="hidden max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-xl font-bold">
+          <i class="fa-solid fa-shop"></i>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            Amar Store Admin Panel
+            <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-normal">Live Sync</span>
+          </h1>
+          <p class="text-slate-400 text-xs">মেইন স্টোর নিয়ন্ত্রণ ও প্রোডাক্ট ম্যানেজমেন্ট কন্ট্রোল</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+        <a href="/" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-700 flex items-center gap-2 transition">
+          <i class="fa-solid fa-external-link"></i> মেইন ওয়েবসাইট দেখুন
+        </a>
+        <button onclick="logoutAdmin()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition cursor-pointer">
+          <i class="fa-solid fa-right-from-bracket"></i> লগআউট
+        </button>
+      </div>
+    </header>
+
+    <!-- SUCCESS NOTIFICATION TOAST -->
+    <div id="toast" class="fixed top-5 right-5 z-50 bg-emerald-500 text-slate-950 font-bold px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-2">
+      <i class="fa-solid fa-circle-check text-lg"></i> <span id="toastMsg">সফলভাবে সেভ হয়েছে!</span>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-6 custom-scrollbar border-b border-slate-800">
+      <button onclick="switchTab('products')" id="tabBtn-products" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer">
+        <i class="fa-solid fa-box-open"></i> প্রোডাক্ট ম্যানেজমেন্ট
+      </button>
+      <button onclick="switchTab('notice')" id="tabBtn-notice" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-bullhorn"></i> নোটিশ ও স্লাইডার
+      </button>
+      <button onclick="switchTab('payments')" id="tabBtn-payments" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-wallet"></i> পেমেন্ট নম্বর
+      </button>
+      <button onclick="switchTab('orders')" id="tabBtn-orders" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-receipt"></i> অর্ডার হিস্ট্রি
+      </button>
+      <button onclick="switchTab('users')" id="tabBtn-users" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-users"></i> ইউজার ব্যালেন্স যোগ
+      </button>
+    </div>
+
+    <!-- TAB 1: PRODUCT MANAGEMENT -->
+    <div id="tabContent-products" class="tab-content block">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- ADD / EDIT PRODUCT FORM -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl h-fit">
+          <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <i class="fa-solid fa-plus-circle"></i> নতুন প্রোডাক্ট যোগ করুন
+          </h2>
+
+          <form id="productForm" onsubmit="handleSaveProduct(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">ক্যাটেগরি নির্বাচন করুন</label>
+              <select id="prodCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="OTT Subscriptions">OTT Subscriptions</option>
+                <option value="Softwares & VPN">Softwares & VPN</option>
+                <option value="Game TopUp & Coins">Game TopUp & Coins</option>
+                <option value="Digital Services">Digital Services</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">সাব-ক্যাটেগরি (ঐচ্ছিক)</label>
+              <input type="text" id="prodSubcat" placeholder="যেমন: Netflix, Prime Video, Canva" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">প্রোডাক্টের নাম *</label>
+              <input type="text" id="prodTitle" required placeholder="যেমন: Netflix 1 Month Screen" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">ছবি URL (Image Link)</label>
+              <input type="text" id="prodImage" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">রেগুলার প্রাইস (৳)</label>
+                <input type="number" id="prodRegularPrice" placeholder="400" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">অফার প্রাইস (৳) *</label>
+                <input type="number" id="prodOfferPrice" required placeholder="250" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">মেয়াদ / ডুরেশন</label>
+              <input type="text" id="prodDuration" placeholder="যেমন: ৩০ দিন / ১ মাস" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">স্টক স্ট্যাটাস</label>
+              <select id="prodStock" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="in">In Stock (স্টকে আছে)</option>
+                <option value="out">Out of Stock (স্টকে নেই)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">সংক্ষিপ্ত বিবরণ</label>
+              <textarea id="prodDesc" rows="2" placeholder="প্রোডাক্টের সুবিধা বা নিয়মাবলী..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 cursor-pointer">
+              <i class="fa-solid fa-save mr-1"></i> প্রোডাক্ট সেভ করুন
+            </button>
+          </form>
+        </div>
+
+        <!-- PRODUCT LIST DISPLAY -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-boxes-stacked text-amber-400"></i> বিদ্যমান প্রোডাক্ট তালিকা
+            </h2>
+            <button onclick="loadCategoriesData()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">
+              <i class="fa-solid fa-rotate mr-1"></i> রিফ্রেশ
+            </button>
+          </div>
+
+          <div id="productListContainer" class="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-slate-500 text-sm text-center py-8">প্রোডাক্ট লোড হচ্ছে...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: NOTICE & BANNER SLIDER -->
+    <div id="tabContent-notice" class="tab-content hidden space-y-6">
+      
+      <!-- NOTICE TEXT SETTING -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+        <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+          <i class="fa-solid fa-scroll"></i> হেডার মার্কিউ স্ক্রলিং নোটিশ (Notice Text)
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">সাইটের ওপরের স্ক্রলিং টেক্সট</label>
+            <textarea id="noticeInput" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500" placeholder="যেমন: আমাদের স্টোরে স্বাগতম! বিকাশ ও নগদে অটো পেমেন্ট রিসিভ করা হচ্ছে..."></textarea>
+          </div>
+          <button onclick="saveNoticeText()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition cursor-pointer">
+            <i class="fa-solid fa-save mr-1"></i> নোটিশ আপডেট করুন
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER SLIDER IMAGES -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+        <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+          <i class="fa-solid fa-images"></i> হোমপেজ স্লাইডার ব্যানার (Banner Slider)
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-slate-400 mb-1">নতুন ব্যানার ইমেজের লিংক (URL)</label>
+            <input type="text" id="newBannerUrl" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="flex items-end">
+            <button onclick="addBannerImage()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-xl transition cursor-pointer">
+              <i class="fa-solid fa-plus mr-1"></i> ব্যানার যোগ করুন
+            </button>
+          </div>
+        </div>
+
+        <div id="bannerListContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <p class="text-slate-500 text-sm py-4">স্লাইডার লোড হচ্ছে...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 3: PAYMENT NUMBERS -->
+    <div id="tabContent-payments" class="tab-content hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl max-w-2xl mx-auto">
+        <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+          <i class="fa-solid fa-money-check-dollar"></i> পেমেন্ট অ্যাকাউন্ট নম্বর
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-pink-400 mb-1 font-bold">bKash (বিকাশ Personal/Send Money)</label>
+            <input type="text" id="bkashNum" placeholder="017XXXXXXXX" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-orange-400 mb-1 font-bold">Nagad (নগদ Personal/Send Money)</label>
+            <input type="text" id="nagadNum" placeholder="018XXXXXXXX" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-purple-400 mb-1 font-bold">Rocket (রকেট Personal)</label>
+            <input type="text" id="rocketNum" placeholder="019XXXXXXXX" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
+          </div>
+
+          <button onclick="savePaymentNumbers()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-4 rounded-xl transition cursor-pointer">
+            <i class="fa-solid fa-save mr-1"></i> পেমেন্ট নম্বর সেভ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: ORDERS HISTORY -->
+    <div id="tabContent-orders" class="tab-content hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-amber-400"></i> সকল কাস্টমার অর্ডার
+          </h2>
+          <button onclick="loadOrdersData()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">
+            <i class="fa-solid fa-rotate mr-1"></i> রিফ্রেশ
+          </button>
+        </div>
+
+        <div id="ordersContainer" class="space-y-4 max-h-[650px] overflow-y-auto custom-scrollbar">
+          <p class="text-slate-500 text-sm text-center py-8">অর্ডার লোড হচ্ছে...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: USER BALANCE MANAGEMENT -->
+    <div id="tabContent-users" class="tab-content hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl max-w-xl mx-auto">
+        <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+          <i class="fa-solid fa-wallet"></i> ব্যবহারকারীর অ্যাকাউন্টে টাকা/ব্যালেন্স যোগ করুন
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">ব্যবহারকারীর ইমেইল (User Email) *</label>
+            <input type="email" id="userEmailInput" placeholder="user@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">টাকার পরিমাণ (৳) *</label>
+            <input type="number" id="addAmountInput" placeholder="500" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+
+          <button onclick="handleAddUserBalance()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-4 rounded-xl transition cursor-pointer">
+            <i class="fa-solid fa-plus-circle mr-1"></i> ব্যালেন্স যুক্ত করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Firebase Configuration for Amar Store
+    const firebaseConfig = {
+      apiKey: "AIzaSyAj_9HwDlzLrCzQIjjNORbmShHE_s9ufb4",
+      authDomain: "amarstore-e6a3f.firebaseapp.com",
+      projectId: "amarstore-e6a3f",
+      storageBucket: "amarstore-e6a3f.firebasestorage.app",
+      messagingSenderId: "390031961658",
+      appId: "1:390031961658:web:749a0384f04c36223bcf03"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    let globalCategories = [];
+    let globalSettings = {};
+
+    // FIREBASE AUTHENTICATION
+    async function checkAdminPassword() {
+      const email = document.getElementById('adminEmailInput').value.trim();
+      const password = document.getElementById('adminPassInput').value.trim();
+      const err = document.getElementById('loginError');
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (!email || !password) {
+        err.innerText = 'ইমেইল এবং পাসওয়ার্ড উভয়ই লিখুন।';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> লগইন হচ্ছে...';
+      err.classList.add('hidden');
+
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        sessionStorage.setItem('amar_admin_logged', 'true');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('adminMainContent').classList.remove('hidden');
+        initAdminData();
+      } catch (e) {
+        console.error(e);
+        err.innerText = 'লগইন ব্যর্থ হয়েছে: ' + (e.message || 'ভুল ইমেইল বা পাসওয়ার্ড!');
+        err.classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = 'লগইন করুন <i class="fa-solid fa-arrow-right ml-2"></i>';
+      }
+    }
+
+    async function logoutAdmin() {
+      try {
+        await firebase.auth().signOut();
+      } catch (e) {}
+      sessionStorage.removeItem('amar_admin_logged');
+      location.reload();
+    }
+
+    // Check if already logged in with onAuthStateChanged
+    window.addEventListener('DOMContentLoaded', () => {
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user && user.email === 'trxrafiff@gmail.com' && sessionStorage.getItem('amar_admin_logged') === 'true') {
+          document.getElementById('loginOverlay').classList.add('hidden');
+          document.getElementById('adminMainContent').classList.remove('hidden');
+          initAdminData();
+        } else {
+          document.getElementById('loginOverlay').classList.remove('hidden');
+          document.getElementById('adminMainContent').classList.add('hidden');
+        }
+      });
+    });
+
+    // TOAST NOTIFICATION
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+      }, 3000);
+    }
+
+    // TAB SWITCHING
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-500', 'text-slate-950', 'shadow-lg');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+
+      document.getElementById(`tabContent-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+      activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+      activeBtn.classList.add('bg-amber-500', 'text-slate-950', 'shadow-lg');
+
+      if (tabId === 'products') loadCategoriesData();
+      if (tabId === 'notice') loadSettingsData();
+      if (tabId === 'payments') loadSettingsData();
+      if (tabId === 'orders') loadOrdersData();
+    }
+
+    function initAdminData() {
+      loadCategoriesData();
+      loadSettingsData();
+      loadOrdersData();
+    }
+
+    // LOAD CATEGORIES & PRODUCTS
+    async function loadCategoriesData() {
+      const container = document.getElementById('productListContainer');
+      container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">লোড হচ্ছে...</p>';
+
+      try {
+        const cached = localStorage.getItem('amar_store_live_categories');
+        if (cached) {
+          globalCategories = JSON.parse(cached);
+          renderProductList(globalCategories);
+        }
+
+        const snapshot = await db.collection('categories').get();
+        if (!snapshot.empty) {
+          const loadedCats = [];
+          snapshot.forEach(doc => {
+            loadedCats.push(doc.data());
+          });
+          if (loadedCats.length > 0) {
+            globalCategories = loadedCats;
+            localStorage.setItem('amar_store_live_categories', JSON.stringify(loadedCats));
+            renderProductList(loadedCats);
+          }
+        }
+      } catch (e) {
+        console.warn('Firestore load notice:', e);
+      }
+    }
+
+    function renderProductList(categories) {
+      const container = document.getElementById('productListContainer');
+      if (!categories || categories.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">কোনো ক্যাটেগরি বা প্রোডাক্ট পাওয়া যায়নি।</p>';
+        return;
+      }
+
+      let html = '';
+      categories.forEach((cat, cIdx) => {
+        html += `
+          <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-sm font-bold text-amber-400 mb-3 uppercase tracking-wider flex items-center justify-between">
+              <span><i class="fa-solid fa-folder-open mr-1"></i> ${cat.name || 'Category'}</span>
+              <span class="text-xs text-slate-500">(${cat.products?.length || 0} টি প্রোডাক্ট)</span>
+            </h3>
+            <div class="space-y-3">
+        `;
+
+        if (!cat.products || cat.products.length === 0) {
+          html += `<p class="text-xs text-slate-500 italic">এই ক্যাটেগরিতে কোনো প্রোডাক্ট নেই।</p>`;
+        } else {
+          cat.products.forEach((prod, pIdx) => {
+            html += `
+              <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                  <img src="${prod.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100'}" class="w-12 h-12 rounded-lg object-cover bg-slate-800 border border-slate-700">
+                  <div>
+                    <h4 class="font-bold text-sm text-white">${prod.title || 'Product'}</h4>
+                    <p class="text-xs text-slate-400">
+                      মূল্য: <span class="text-amber-400 font-bold">৳${prod.offerPrice || prod.price || 0}</span> 
+                      ${prod.regularPrice ? `<span class="line-through text-slate-600 ml-1">৳${prod.regularPrice}</span>` : ''}
+                      ${prod.duration ? ` • ${prod.duration}` : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button onclick="toggleProductStock(${cIdx}, ${pIdx})" class="px-2.5 py-1 rounded text-xs font-semibold ${prod.status === 'out' ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'} cursor-pointer">
+                    ${prod.status === 'out' ? 'Out of Stock' : 'In Stock'}
+                  </button>
+                  <button onclick="deleteProduct(${cIdx}, ${pIdx})" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 p-2 rounded-lg text-xs cursor-pointer">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        html += `</div></div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    async function handleSaveProduct(e) {
+      e.preventDefault();
+      const catName = document.getElementById('prodCategory').value;
+      const subcat = document.getElementById('prodSubcat').value.trim();
+      const title = document.getElementById('prodTitle').value.trim();
+      const image = document.getElementById('prodImage').value.trim();
+      const regularPrice = Number(document.getElementById('prodRegularPrice').value) || 0;
+      const offerPrice = Number(document.getElementById('prodOfferPrice').value) || 0;
+      const duration = document.getElementById('prodDuration').value.trim();
+      const status = document.getElementById('prodStock').value;
+      const description = document.getElementById('prodDesc').value.trim();
+
+      const newProd = {
+        id: 'prod_' + Date.now(),
+        name: title,
+        title: title,
+        subcategory: subcat,
+        image: image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500',
+        regularPrice: regularPrice,
+        offerPrice: offerPrice,
+        price: offerPrice,
+        duration: duration || '৩০ দিন',
+        status: status,
+        description: description,
+        avgRating: '5.0',
+        delivery: 'Instant (5-15 min)',
+        inputLabel: 'Player ID / UID',
+        packages: [
+          {
+            name: duration || 'Standard Package',
+            price: Number(offerPrice)
+          }
+        ],
+        features: subcat ? [subcat, duration || 'Instant Delivery'] : ['Instant Delivery']
+      };
+
+      let catIdx = globalCategories.findIndex(c => c.name === catName);
+      if (catIdx === -1) {
+        globalCategories.push({
+          name: catName,
+          priority: globalCategories.length + 1,
+          products: [newProd]
+        });
+      } else {
+        if (!globalCategories[catIdx].products) globalCategories[catIdx].products = [];
+        globalCategories[catIdx].products.unshift(newProd);
+      }
+
+      await syncCategoriesToFirestore();
+      document.getElementById('productForm').reset();
+      showToast('প্রোডাক্ট সফলভাবে সংরক্ষণ করা হয়েছে!');
+      renderProductList(globalCategories);
+    }
+
+    async function toggleProductStock(cIdx, pIdx) {
+      if (!globalCategories[cIdx] || !globalCategories[cIdx].products[pIdx]) return;
+      const prod = globalCategories[cIdx].products[pIdx];
+      prod.status = prod.status === 'out' ? 'in' : 'out';
+      await syncCategoriesToFirestore();
+      renderProductList(globalCategories);
+      showToast('স্টক স্ট্যাটাস পরিবর্তন করা হয়েছে');
+    }
+
+    async function deleteProduct(cIdx, pIdx) {
+      if (!confirm('আপনি কি নিশ্চিত যে এই প্রোডাক্টটি মুছে ফেলতে চান?')) return;
+      globalCategories[cIdx].products.splice(pIdx, 1);
+      await syncCategoriesToFirestore();
+      renderProductList(globalCategories);
+      showToast('প্রোডাক্ট মুছে ফেলা হয়েছে');
+    }
+
+    async function syncCategoriesToFirestore() {
+      localStorage.setItem('amar_store_live_categories', JSON.stringify(globalCategories));
+      try {
+        for (const cat of globalCategories) {
+          const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+          await db.collection('categories').doc(catId).set({
+            name: cat.name,
+            priority: cat.priority || 1,
+            products: cat.products || [],
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      } catch (err) {
+        console.warn('Firestore categories sync notice', err);
+      }
+    }
+
+    // LOAD & SAVE SETTINGS (NOTICE, BANNER SLIDER, PAYMENTS)
+    async function loadSettingsData() {
+      try {
+        const cached = localStorage.getItem('amar_store_live_settings');
+        if (cached) {
+          globalSettings = JSON.parse(cached);
+          applySettingsUI(globalSettings);
+        }
+
+        const docSnap = await db.collection('app_config').doc('settings').get();
+        if (docSnap.exists) {
+          globalSettings = docSnap.data();
+          localStorage.setItem('amar_store_live_settings', JSON.stringify(globalSettings));
+          applySettingsUI(globalSettings);
+        }
+      } catch (err) {
+        console.warn('Firestore settings notice', err);
+      }
+    }
+
+    function applySettingsUI(s) {
+      if (s.noticeText) document.getElementById('noticeInput').value = s.noticeText;
+      if (s.payments) {
+        document.getElementById('bkashNum').value = s.payments.bkash || '';
+        document.getElementById('nagadNum').value = s.payments.nagad || '';
+        document.getElementById('rocketNum').value = s.payments.rocket || '';
+      }
+      renderBanners(s.sliderData || []);
+    }
+
+    function renderBanners(sliderData) {
+      const container = document.getElementById('bannerListContainer');
+      if (!sliderData || sliderData.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-sm py-4">কোনো ব্যানার ছবি যুক্ত করা নেই।</p>';
+        return;
+      }
+
+      let html = '';
+      sliderData.forEach((item, idx) => {
+        const url = typeof item === 'string' ? item : item.image;
+        html += `
+          <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden group">
+            <img src="${url}" class="w-full h-32 object-cover">
+            <button onclick="removeBannerImage(${idx})" class="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-lg cursor-pointer">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    async function saveNoticeText() {
+      const text = document.getElementById('noticeInput').value.trim();
+      globalSettings.noticeText = text;
+      await syncSettingsToFirestore();
+      showToast('নোটিশ সফলভাবে সেভ হয়েছে!');
+    }
+
+    async function addBannerImage() {
+      const url = document.getElementById('newBannerUrl').value.trim();
+      if (!url) return alert('ব্যানারের ছবি URL প্রদান করুন');
+
+      if (!globalSettings.sliderData) globalSettings.sliderData = [];
+      globalSettings.sliderData.push({ id: Date.now(), img: url, image: url, link: "" });
+
+      await syncSettingsToFirestore();
+      document.getElementById('newBannerUrl').value = '';
+      renderBanners(globalSettings.sliderData);
+      showToast('নতুন ব্যানার সেভ হয়েছে!');
+    }
+
+    async function removeBannerImage(idx) {
+      globalSettings.sliderData.splice(idx, 1);
+      await syncSettingsToFirestore();
+      renderBanners(globalSettings.sliderData);
+      showToast('ব্যানার মুছে ফেলা হয়েছে');
+    }
+
+    async function savePaymentNumbers() {
+      globalSettings.payments = {
+        bkash: document.getElementById('bkashNum').value.trim(),
+        nagad: document.getElementById('nagadNum').value.trim(),
+        rocket: document.getElementById('rocketNum').value.trim(),
+      };
+      await syncSettingsToFirestore();
+      showToast('পেমেন্ট নম্বর সেভ হয়েছে!');
+    }
+
+    async function syncSettingsToFirestore() {
+      localStorage.setItem('amar_store_live_settings', JSON.stringify(globalSettings));
+      try {
+        await db.collection('app_config').doc('settings').set(globalSettings, { merge: true });
+      } catch (err) {
+        console.warn('Firestore settings save notice:', err);
+      }
+    }
+
+    // LOAD & MANAGE ORDERS
+    async function loadOrdersData() {
+      const container = document.getElementById('ordersContainer');
+      container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">অর্ডার লোড হচ্ছে...</p>';
+
+      try {
+        const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
+        const orders = [];
+        snapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+
+        if (orders.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">কোনো অর্ডার পাওয়া যায়নি।</p>';
+          return;
+        }
+
+        let html = '';
+        orders.forEach(ord => {
+          html += `
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-bold text-sm text-amber-400">#${ord.id?.slice(0, 8) || 'ORDER'}</span>
+                  <span class="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-300">${ord.paymentMethod || 'Manual'}</span>
+                  <span class="text-xs px-2 py-0.5 rounded font-bold ${ord.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}">${ord.status || 'pending'}</span>
+                </div>
+                <h4 class="font-bold text-white text-base">${ord.productName || 'Product'}</h4>
+                <p class="text-xs text-slate-400">ইউজার: <span class="text-slate-200 font-semibold">${ord.userEmail || 'Guest'}</span> | মূল্য: <span class="text-amber-400 font-bold">৳${ord.amount || 0}</span></p>
+                ${ord.trxId ? `<p class="text-xs text-emerald-400 mt-1 font-mono">TrxID: ${ord.trxId}</p>` : ''}
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="updateOrderStatus('${ord.id}', 'completed')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs px-3 py-2 rounded-lg cursor-pointer">
+                  কমপ্লিট করুন
+                </button>
+                <button onclick="updateOrderStatus('${ord.id}', 'cancelled')" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 font-bold text-xs px-3 py-2 rounded-lg cursor-pointer">
+                  বাতিল করুন
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">অর্ডার লোড করতে সমস্যা হয়েছে বা কোনো অর্ডার নেই।</p>';
+      }
+    }
+
+    async function updateOrderStatus(orderId, status) {
+      try {
+        await db.collection('orders').doc(orderId).update({ status });
+        showToast(`অর্ডার স্ট্যাটাস '${status}' করা হয়েছে`);
+        loadOrdersData();
+      } catch (err) {
+        alert('অর্ডার আপডেট করতে সমস্যা হয়েছে');
+      }
+    }
+
+    // USER BALANCE ADD
+    async function handleAddUserBalance() {
+      const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
+      const amount = Number(document.getElementById('addAmountInput').value) || 0;
+
+      if (!email || amount <= 0) return alert('সঠিক ইমেইল ও টাকার পরিমাণ প্রদান করুন');
+
+      try {
+        const userRef = db.collection('users').doc(email);
+        const docSnap = await userRef.get();
+        let currentBalance = 0;
+        if (docSnap.exists) {
+          currentBalance = docSnap.data().balance || 0;
+        }
+
+        await userRef.set({
+          balance: currentBalance + amount,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        document.getElementById('userEmailInput').value = '';
+        document.getElementById('addAmountInput').value = '';
+        showToast(`৳${amount} সফলভাবে ${email} এর অ্যাকাউন্টে যুক্ত হয়েছে!`);
+      } catch (err) {
+        alert('ব্যালেন্স যুক্ত করতে সমস্যা হয়েছে: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
