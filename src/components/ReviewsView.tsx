@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Review, UserProfile } from '../types';
-import { getLocalAddedReviews, fetchLiveHelpfulCounts, updateLiveHelpfulCount } from '../services/storeService';
+import { getLocalAddedReviews, fetchLiveHelpfulCounts, getUserVotedReviews, toggleUserHelpfulVote } from '../services/storeService';
 
 interface Props {
   reviews: Review[];
@@ -66,7 +66,9 @@ export const ReviewsView: React.FC<Props> = ({
     }
   });
 
-  // Fetch live global helpful counts from Firestore on mount
+  const userKey = user && user.isLoggedIn ? (user.email || user.memberId || '').toLowerCase().trim() : '';
+
+  // Fetch live global helpful counts and user's voted reviews from Firestore
   useEffect(() => {
     fetchLiveHelpfulCounts().then(liveCounts => {
       if (liveCounts && Object.keys(liveCounts).length > 0) {
@@ -76,7 +78,15 @@ export const ReviewsView: React.FC<Props> = ({
         }));
       }
     });
-  }, []);
+
+    if (userKey) {
+      getUserVotedReviews(userKey).then(voted => {
+        if (voted) {
+          setHelpfulMap(voted);
+        }
+      });
+    }
+  }, [userKey]);
 
   // Write review form state
   const [productName, setProductName] = useState(productNames[0] || 'Netflix');
@@ -146,8 +156,8 @@ export const ReviewsView: React.FC<Props> = ({
     return helpfulCountsMap[review.id] || 0;
   };
 
-  const handleHelpful = (id: string, review: Review) => {
-    if (!user || !user.isLoggedIn) {
+  const handleHelpful = async (id: string, review: Review) => {
+    if (!user || !user.isLoggedIn || !userKey) {
       if (onOpenAuthModal) {
         onOpenAuthModal('login');
       } else {
@@ -156,35 +166,21 @@ export const ReviewsView: React.FC<Props> = ({
       return;
     }
 
-    const isCurrentlyHelpful = !!helpfulMap[id];
-    const currentCount = getHelpfulCount(review);
-    const newCount = isCurrentlyHelpful 
-      ? Math.max(0, currentCount - 1) 
-      : currentCount + 1;
-    
-    const newHelpfulMap = {
-      ...helpfulMap,
-      [id]: !isCurrentlyHelpful
-    };
-
-    const newCountsMap = {
-      ...helpfulCountsMap,
-      [id]: newCount
-    };
-
-    setHelpfulMap(newHelpfulMap);
-    setHelpfulCountsMap(newCountsMap);
-
-    // Save user's local vote state
     try {
-      localStorage.setItem('amar_store_user_helpful_votes', JSON.stringify(newHelpfulMap));
-      localStorage.setItem('amar_store_real_helpful_counts', JSON.stringify(newCountsMap));
-    } catch (e) {
-      console.warn("Could not save helpful votes to localStorage", e);
-    }
+      const { newCount, hasVoted } = await toggleUserHelpfulVote(id, userKey);
+      
+      setHelpfulMap(prev => ({
+        ...prev,
+        [id]: hasVoted
+      }));
 
-    // Synchronize global count to Firestore so all users see the update
-    updateLiveHelpfulCount(id, newCount, helpfulCountsMap);
+      setHelpfulCountsMap(prev => ({
+        ...prev,
+        [id]: newCount
+      }));
+    } catch (err) {
+      console.warn("Failed to toggle helpful vote", err);
+    }
   };
 
   const handleOpenWriteReview = () => {

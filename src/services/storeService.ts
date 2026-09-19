@@ -7,7 +7,7 @@ import {
   updateProfile,
   signOut
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 
 const FIREBASE_CONFIG = {
   projectId: "dshop-46653",
@@ -674,24 +674,60 @@ export async function fetchLiveHelpfulCounts(): Promise<Record<string, number>> 
   }
 }
 
-export async function updateLiveHelpfulCount(reviewId: string, newCount: number, currentMap: Record<string, number>): Promise<void> {
+export async function getUserVotedReviews(userKey: string): Promise<Record<string, boolean>> {
+  if (!userKey) return {};
   try {
-    const updatedMap = { ...currentMap, [reviewId]: newCount };
-    const fields: Record<string, any> = {};
-    
-    for (const [k, v] of Object.entries(updatedMap)) {
-      fields[k] = { integerValue: String(v) };
-    }
-
-    await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/helpful_counts/global`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ fields })
+    const querySnapshot = await getDocs(collection(db, 'helpful_voters'));
+    const votedMap: Record<string, boolean> = {};
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (docSnap.id.endsWith(`_${userKey}`) && data.voted) {
+        const reviewId = docSnap.id.replace(`_${userKey}`, '');
+        votedMap[reviewId] = true;
+      }
     });
+    return votedMap;
   } catch (err) {
-    console.warn("Failed to update live helpful count in Firestore", err);
+    console.warn("Failed to get user voted reviews", err);
+    return {};
   }
 }
+
+export async function toggleUserHelpfulVote(reviewId: string, userKey: string): Promise<{ newCount: number; hasVoted: boolean }> {
+  if (!userKey) throw new Error("User key required");
+  const voterDocId = `${reviewId}_${userKey}`;
+  const voterRef = doc(db, 'helpful_voters', voterDocId);
+  const countRef = doc(db, 'helpful_counts', 'global');
+
+  try {
+    const voterSnap = await getDoc(voterRef);
+    const hasVotedBefore = voterSnap.exists() && voterSnap.data().voted;
+
+    const countSnap = await getDoc(countRef);
+    const countData = countSnap.exists() ? countSnap.data() : {};
+    const currentCount = Number(countData[reviewId] || 0);
+
+    let newCount = currentCount;
+    let newHasVoted = false;
+
+    if (hasVotedBefore) {
+      await deleteDoc(voterRef);
+      newCount = Math.max(0, currentCount - 1);
+      newHasVoted = false;
+    } else {
+      await setDoc(voterRef, { voted: true, userKey, reviewId });
+      newCount = currentCount + 1;
+      newHasVoted = true;
+    }
+
+    const updatedCounts = { ...countData, [reviewId]: newCount };
+    await setDoc(countRef, updatedCounts, { merge: true });
+
+    return { newCount, hasVoted: newHasVoted };
+  } catch (err) {
+    console.warn("Error toggling helpful vote", err);
+    throw err;
+  }
+}
+
 
