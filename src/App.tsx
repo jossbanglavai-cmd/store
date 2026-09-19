@@ -27,7 +27,9 @@ import {
   saveUserProfile,
   logoutUser,
   listenToLiveUser,
-  listenToLiveCategories
+  listenToLiveCategories,
+  listenToLiveSettings,
+  listenToLiveReviews
 } from './services/storeService';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -166,7 +168,7 @@ export default function App() {
           fetchLiveReviews(),
         ]);
         setSettings(liveSettings);
-        if (liveCategories && liveCategories.length > 0) {
+        if (liveCategories) {
           setCategories(liveCategories);
         }
         setReviews(liveReviews);
@@ -178,13 +180,23 @@ export default function App() {
 
     // Listen to live category changes in real time
     const unsubscribeCategories = listenToLiveCategories((updatedCats) => {
-      if (updatedCats && updatedCats.length > 0) {
-        setCategories(updatedCats);
-      }
+      setCategories(updatedCats);
+    });
+
+    // Listen to live settings changes in real time (notices, banners, payments)
+    const unsubscribeSettings = listenToLiveSettings((updatedSettings) => {
+      setSettings(updatedSettings);
+    });
+
+    // Listen to live reviews in real time
+    const unsubscribeReviews = listenToLiveReviews((updatedReviews) => {
+      setReviews(updatedReviews);
     });
 
     return () => {
       unsubscribeCategories();
+      unsubscribeSettings();
+      unsubscribeReviews();
     };
   }, []);
 

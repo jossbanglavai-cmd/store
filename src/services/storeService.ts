@@ -587,6 +587,15 @@ export async function saveLiveCategories(categories: Category[]): Promise<void> 
   }
 
   try {
+    // Delete obsolete documents from Firestore
+    const querySnapshot = await getDocs(collection(db, 'categories'));
+    const activeIds = new Set(categories.map(c => (c.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_')));
+    for (const docSnap of querySnapshot.docs) {
+      if (!activeIds.has(docSnap.id)) {
+        await deleteDoc(doc(db, 'categories', docSnap.id));
+      }
+    }
+
     for (const cat of categories) {
       const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
       const catRef = doc(db, 'categories', catId);
@@ -595,7 +604,7 @@ export async function saveLiveCategories(categories: Category[]): Promise<void> 
         priority: cat.priority || 1,
         products: cat.products || [],
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      });
     }
   } catch (err) {
     console.warn("Firestore categories sync error:", err);
@@ -684,6 +693,91 @@ export function listenToLiveUser(email: string, onUpdate: (data: { balance: numb
     }
   }, (err) => {
     console.warn("User live listener notice:", err);
+  });
+}
+
+export function listenToLiveSettings(onUpdate: (settings: AppSettings) => void): () => void {
+  const settingsRef = doc(db, 'app_config', 'settings');
+  return onSnapshot(settingsRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const rawSlider = data.sliderData || [];
+      const sliderData = rawSlider.map((s: any) => ({
+        img: s.img || s.image || "",
+        link: s.link || "",
+      })).filter((s: any) => s.img);
+
+      const payments = data.payments || {};
+
+      const settings: AppSettings = {
+        headerLogo: data.headerLogo || FALLBACK_SETTINGS.headerLogo,
+        noticeText: data.noticeText !== undefined ? data.noticeText : FALLBACK_SETTINGS.noticeText,
+        favicon: data.favicon || FALLBACK_SETTINGS.favicon,
+        sliderData: Array.isArray(data.sliderData) ? sliderData : FALLBACK_SETTINGS.sliderData,
+        payments: {
+          bkash: payments.bkash || FALLBACK_SETTINGS.payments.bkash,
+          bkashImg: payments.bkashImg || FALLBACK_SETTINGS.payments.bkashImg,
+          nagad: payments.nagad === "🚫 OFF" ? "01770931981" : (payments.nagad || FALLBACK_SETTINGS.payments.nagad),
+          nagadImg: payments.nagadImg || FALLBACK_SETTINGS.payments.nagadImg,
+        },
+        walletPayImg: data.walletPayImg || FALLBACK_SETTINGS.walletPayImg,
+        manualPayImg: data.manualPayImg || FALLBACK_SETTINGS.manualPayImg,
+        popupIcon: data.popupIcon || "",
+        popupUrl: data.popupUrl || "",
+      };
+
+      localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
+      onUpdate(settings);
+    }
+  }, (err) => {
+    console.warn("Settings live listener notice:", err);
+  });
+}
+
+// Live real-time listener for reviews
+export function listenToLiveReviews(onUpdate: (reviews: Review[]) => void): () => void {
+  const reviewsCol = collection(db, 'reviews');
+  return onSnapshot(reviewsCol, (snapshot) => {
+    if (snapshot.empty) {
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify([]));
+      onUpdate([]);
+      return;
+    }
+
+    const remoteReviews: Review[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+      const rating = Number(data.rating || 5);
+      const timestamp = data.timestamp || new Date().toISOString();
+      
+      let dateFormatted = "সাম্প্রতিক";
+      if (timestamp) {
+        const diffDays = Math.floor((Date.now() - new Date(timestamp).getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 0) dateFormatted = "আজকে";
+        else if (diffDays === 1) dateFormatted = "১ দিন আগে";
+        else if (diffDays < 7) dateFormatted = `${diffDays} দিন আগে`;
+        else dateFormatted = `${Math.floor(diffDays / 7)} সপ্তাহ আগে`;
+      }
+
+      remoteReviews.push({
+        id,
+        userName: data.userName || "সম্মানিত গ্রাহক",
+        userPhoto: data.userPhoto || "",
+        productName: data.productName || "Amar Store",
+        rating,
+        comment: data.comment || "",
+        status: data.status || "Approved",
+        timestamp,
+        dateFormatted
+      });
+    });
+
+    const filtered = remoteReviews.filter((r: Review) => r.comment);
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(filtered));
+    onUpdate(filtered);
+  }, (err) => {
+    console.warn("Reviews live listener notice:", err);
   });
 }
 

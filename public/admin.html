@@ -876,15 +876,19 @@
       const cat = globalCategories[idx];
       if (!confirm(`আপনি কি নিশ্চিত যে '${cat.name}' ক্যাটাগরি এবং এর সকল প্রোডাক্ট মুছে ফেলতে চান?`)) return;
 
-      const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const docId = cat.id || (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const normalizedNameId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
       try {
-        await db.collection('categories').doc(catId).delete();
+        await db.collection('categories').doc(docId).delete();
+        if (docId !== normalizedNameId) {
+          await db.collection('categories').doc(normalizedNameId).delete();
+        }
       } catch (err) {
         console.warn('Firestore doc delete notice:', err);
       }
 
       globalCategories.splice(idx, 1);
-      localStorage.setItem('amar_store_live_categories', JSON.stringify(globalCategories));
+      await syncCategoriesToFirestore();
       renderCategoryList(globalCategories);
       renderProductList(globalCategories);
       populateCategoryDropdown(globalCategories);
@@ -1232,6 +1236,21 @@
     async function syncCategoriesToFirestore() {
       localStorage.setItem('amar_store_live_categories', JSON.stringify(globalCategories));
       try {
+        // 1. Fetch current categories in Firestore to delete any obsolete documents
+        const snapshot = await db.collection('categories').get();
+        const activeIds = new Set(globalCategories.map(c => (c.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_')));
+        
+        const deletePromises = [];
+        snapshot.forEach(docSnap => {
+          if (!activeIds.has(docSnap.id)) {
+            deletePromises.push(db.collection('categories').doc(docSnap.id).delete());
+          }
+        });
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
+        }
+
+        // 2. Save active categories with their current products list
         for (const cat of globalCategories) {
           const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
           await db.collection('categories').doc(catId).set({
@@ -1239,7 +1258,7 @@
             priority: cat.priority || 1,
             products: cat.products || [],
             updatedAt: new Date().toISOString()
-          }, { merge: true });
+          });
         }
       } catch (err) {
         console.error('Firestore categories sync error:', err);
