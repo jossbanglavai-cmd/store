@@ -77,7 +77,7 @@ export const ProfilePhotoModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/65 backdrop-blur-xs">
-      <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-[#16181f] text-gray-900 dark:text-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white p-4 flex items-center justify-between">
@@ -105,7 +105,7 @@ export const ProfilePhotoModal: React.FC<Props> = ({
           {/* Current Avatar Preview */}
           <div className="flex flex-col items-center justify-center text-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-neutral-900 text-white border-4 border-gray-100 shadow-md flex items-center justify-center overflow-hidden font-bold text-3xl uppercase">
+              <div className="w-24 h-24 rounded-full bg-neutral-900 dark:bg-neutral-800 text-white border-4 border-gray-100 dark:border-gray-700 shadow-md flex items-center justify-center overflow-hidden font-bold text-3xl uppercase">
                 {previewUrl ? (
                   <img 
                     src={previewUrl} 

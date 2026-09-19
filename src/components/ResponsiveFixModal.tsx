@@ -150,7 +150,7 @@ header, #noticeBoard, .slider-box, #dynamicHomeContent,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100">
+      <div className="bg-white dark:bg-[#16181f] text-gray-900 dark:text-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white p-5 flex items-center justify-between">
@@ -172,13 +172,13 @@ header, #noticeBoard, .slider-box, #dynamicHomeContent,
         </div>
 
         {/* Tab switch */}
-        <div className="flex border-b border-gray-200 bg-gray-50 px-5 pt-3 gap-2">
+        <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-5 pt-3 gap-2">
           <button
             onClick={() => setActiveTab('explanation')}
-            className={`pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${
+            className={`pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'explanation' 
-                ? 'border-black text-black' 
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-black dark:border-white text-black dark:text-white font-bold' 
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -186,10 +186,10 @@ header, #noticeBoard, .slider-box, #dynamicHomeContent,
           </button>
           <button
             onClick={() => setActiveTab('css-code')}
-            className={`pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition ${
+            className={`pb-3 px-4 text-sm font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'css-code' 
-                ? 'border-black text-black' 
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-black dark:border-white text-black dark:text-white font-bold' 
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <Code2 className="w-4 h-4 text-blue-500" />

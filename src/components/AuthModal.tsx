@@ -92,7 +92,7 @@ export const AuthModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/65 backdrop-blur-xs">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+      <div className="bg-white dark:bg-[#16181f] text-gray-900 dark:text-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-neutral-900 to-neutral-800 text-white p-5 flex items-center justify-between">
@@ -122,14 +122,14 @@ export const AuthModal: React.FC<Props> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
           {errorMsg && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl flex items-start gap-2">
+            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs p-3 rounded-xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <span className="font-medium leading-relaxed">{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs p-3 rounded-xl flex items-center gap-2">
+            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs p-3 rounded-xl flex items-center gap-2">
               <span className="font-bold">✓</span>
               <span className="font-medium">{successMsg}</span>
             </div>
@@ -138,7 +138,7 @@ export const AuthModal: React.FC<Props> = ({
           {/* If registering, ask for Name */}
           {mode === 'register' && (
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                 আপনার পুরো নাম (Full Name)
               </label>
               <div className="relative">
@@ -151,7 +151,7 @@ export const AuthModal: React.FC<Props> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="যেমন: নুহূ হোসেন"
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black text-sm outline-hidden"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ export const AuthModal: React.FC<Props> = ({
 
           {/* Email / Gmail ONLY */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
               আপনার ইমেইল (Gmail / Email)
             </label>
             <div className="relative">
@@ -172,17 +172,17 @@ export const AuthModal: React.FC<Props> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="yourname@gmail.com"
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black text-sm outline-hidden font-sans"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm font-sans"
               />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
               {mode === 'register' ? 'অ্যাকাউন্ট খোলার পর এই ইমেইল দিয়েই পরবর্তীতে লগইন করবেন' : 'আপনার নিবন্ধিত জিমেইল/ইমেইল লিখুন'}
             </p>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
               পাসওয়ার্ড (Password)
             </label>
             <div className="relative">
@@ -195,7 +195,7 @@ export const AuthModal: React.FC<Props> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড"
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black text-sm outline-hidden"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export const AuthModal: React.FC<Props> = ({
           {/* Confirm Password only when creating account */}
           {mode === 'register' && (
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                 পাসওয়ার্ড নিশ্চিত করুন (Confirm Password)
               </label>
               <div className="relative">
@@ -216,7 +216,7 @@ export const AuthModal: React.FC<Props> = ({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="পুনরায় পাসওয়ার্ড লিখুন"
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black text-sm outline-hidden"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm"
                 />
               </div>
             </div>

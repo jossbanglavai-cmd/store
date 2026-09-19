@@ -74,7 +74,7 @@ export const AddMoneyModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col">
+      <div className="bg-white dark:bg-[#16181f] text-gray-900 dark:text-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col">
         
         {/* Header */}
         <div className="bg-neutral-900 text-white p-4 sm:p-5 flex items-center justify-between">
@@ -99,7 +99,7 @@ export const AddMoneyModal: React.FC<Props> = ({
         <form onSubmit={handleAddMoney} className="p-5 space-y-4 text-sm">
           
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
@@ -113,7 +113,7 @@ export const AddMoneyModal: React.FC<Props> = ({
               className={`flex-1 py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs transition ${
                 method === 'bkash'
                   ? 'border-[#e2136e] bg-[#e2136e] text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <img src={settings.payments.bkashImg} alt="bKash" className="w-5 h-5 rounded-full object-contain bg-white" />
@@ -125,7 +125,7 @@ export const AddMoneyModal: React.FC<Props> = ({
               className={`flex-1 py-2.5 px-3 rounded-xl border flex items-center justify-center gap-2 font-bold text-xs transition ${
                 method === 'nagad'
                   ? 'border-[#f7941d] bg-[#f7941d] text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <img src={settings.payments.nagadImg} alt="Nagad" className="w-5 h-5 rounded-full object-contain bg-white" />
@@ -134,28 +134,28 @@ export const AddMoneyModal: React.FC<Props> = ({
           </div>
 
           {/* Copy Number Box */}
-          <div className="bg-neutral-100 p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between">
+          <div className="bg-neutral-100 dark:bg-gray-800/80 p-3.5 rounded-xl border border-neutral-200 dark:border-gray-700 flex items-center justify-between">
             <div>
-              <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
                 {method === 'bkash' ? 'bKash Personal Number' : 'Nagad Personal Number'}
               </div>
-              <div className="font-mono text-base font-bold text-gray-900 tracking-wider">
+              <div className="font-mono text-base font-bold text-gray-900 dark:text-amber-400 tracking-wider">
                 {activeNumber}
               </div>
             </div>
             <button
               type="button"
               onClick={copyNumber}
-              className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-gray-200 text-white dark:text-black rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
             >
-              {copiedNum ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedNum ? <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedNum ? 'কপি হয়েছে' : 'Copy'}
             </button>
           </div>
 
           {/* Amount input */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1.5">
               টাকার পরিমাণ (Amount in ৳)
             </label>
             <input
@@ -165,7 +165,7 @@ export const AddMoneyModal: React.FC<Props> = ({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="e.g. 500"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm font-semibold"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm font-semibold"
             />
             {/* Quick chips */}
             <div className="flex gap-2 mt-2">
@@ -174,7 +174,7 @@ export const AddMoneyModal: React.FC<Props> = ({
                   type="button"
                   key={chip}
                   onClick={() => setAmount(chip)}
-                  className="flex-1 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+                  className="flex-1 py-1 text-xs font-semibold rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition"
                 >
                   ৳{chip}
                 </button>
@@ -184,7 +184,7 @@ export const AddMoneyModal: React.FC<Props> = ({
 
           {/* Sender Phone */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1.5">
               আপনার প্রেরক নম্বর (Sender Phone)
             </label>
             <input
@@ -193,13 +193,13 @@ export const AddMoneyModal: React.FC<Props> = ({
               value={senderPhone}
               onChange={(e) => setSenderPhone(e.target.value)}
               placeholder="01XXXXXXXXX"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm font-mono"
             />
           </div>
 
           {/* TrxID */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1.5">
               ট্রানজেকশন আইডি (TrxID)
             </label>
             <input
@@ -208,7 +208,7 @@ export const AddMoneyModal: React.FC<Props> = ({
               value={trxId}
               onChange={(e) => setTrxId(e.target.value)}
               placeholder="e.g. 9HJ72L980"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-black focus:ring-1 focus:ring-black outline-hidden text-sm font-mono uppercase"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black outline-hidden text-sm font-mono uppercase"
             />
           </div>
 
