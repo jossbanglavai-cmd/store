@@ -5,7 +5,9 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   updateProfile,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 
@@ -312,6 +314,67 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
     isLoggedIn: true,
     memberId,
     joinDate: "সদস্য",
+    photoUrl
+  };
+
+  saveUserProfile(profile);
+  return profile;
+}
+
+// Google Login Integration with Firebase Auth
+export async function loginWithGoogle(): Promise<UserProfile> {
+  const provider = new GoogleAuthProvider();
+  const userCredential = await signInWithPopup(auth, provider);
+  const firebaseUser = userCredential.user;
+
+  const email = (firebaseUser.email || '').trim().toLowerCase();
+  const name = firebaseUser.displayName || email.split('@')[0];
+  const photoUrl = firebaseUser.photoURL || '';
+  const memberId = "AS-" + Math.floor(100000 + Math.random() * 900000);
+
+  // Register in local accounts registry if not exists
+  const accounts = getRegisteredAccounts();
+  if (!accounts[email]) {
+    accounts[email] = {
+      email,
+      password: 'GOOGLE_AUTH_USER',
+      name,
+      memberId,
+      createdAt: new Date().toISOString(),
+      photoUrl
+    };
+    saveRegisteredAccounts(accounts);
+  }
+
+  // Fetch remote user data from Firestore if available
+  const remoteData = await fetchUserFromFirestore(email);
+  if (remoteData) {
+    if (typeof remoteData.balance === 'number') {
+      updateWalletBalance(remoteData.balance, email);
+    }
+    if (remoteData.orders && Array.isArray(remoteData.orders)) {
+      try {
+        localStorage.setItem(getStorageKeyForUser('amar_store_orders', email), JSON.stringify(remoteData.orders));
+      } catch {}
+    }
+  } else {
+    // Initialize fresh user doc in Firestore
+    syncUserToFirestore(email, {
+      name,
+      memberId,
+      photoUrl,
+      balance: 0,
+      orders: []
+    });
+  }
+
+  const profile: UserProfile = {
+    name,
+    email,
+    phone: firebaseUser.phoneNumber || '',
+    isLoggedIn: true,
+    memberId,
+    joinDate: "আজ",
     photoUrl
   };
 

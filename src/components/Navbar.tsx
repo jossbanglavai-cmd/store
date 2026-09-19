@@ -42,18 +42,20 @@ export const Navbar: React.FC<Props> = ({
       <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
         
         {/* Logo */}
-        <div 
-          onClick={() => setActiveTab('home')}
-          className="flex items-center gap-2 cursor-pointer transition hover:opacity-90 flex-shrink-0"
-        >
-          <img 
-            src={logoUrl || "https://i.postimg.cc/prFhjX3v/20260514-210650.png"} 
-            alt="Amar Store" 
-            className="h-9 sm:h-11 max-w-[130px] sm:max-w-[170px] object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://i.postimg.cc/prFhjX3v/20260514-210650.png";
-            }}
-          />
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-2 cursor-pointer transition hover:opacity-90 flex-shrink-0"
+          >
+            <img 
+              src={logoUrl || "https://i.postimg.cc/prFhjX3v/20260514-210650.png"} 
+              alt="Amar Store" 
+              className="h-9 sm:h-11 max-w-[130px] sm:max-w-[170px] object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://i.postimg.cc/prFhjX3v/20260514-210650.png";
+              }}
+            />
+          </div>
         </div>
 
         {/* Desktop Nav Links with Icon on Top and Name Below */}
