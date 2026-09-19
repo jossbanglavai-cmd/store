@@ -25,7 +25,9 @@ import {
   updateWalletBalance,
   getUserProfile,
   saveUserProfile,
-  logoutUser
+  logoutUser,
+  listenToLiveUser,
+  listenToLiveCategories
 } from './services/storeService';
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
@@ -164,14 +166,46 @@ export default function App() {
           fetchLiveReviews(),
         ]);
         setSettings(liveSettings);
-        setCategories(liveCategories);
+        if (liveCategories && liveCategories.length > 0) {
+          setCategories(liveCategories);
+        }
         setReviews(liveReviews);
       } catch (err) {
         console.warn("Using fallback store data", err);
       }
     }
     loadData();
+
+    // Listen to live category changes in real time
+    const unsubscribeCategories = listenToLiveCategories((updatedCats) => {
+      if (updatedCats && updatedCats.length > 0) {
+        setCategories(updatedCats);
+      }
+    });
+
+    return () => {
+      unsubscribeCategories();
+    };
   }, []);
+
+  // Listen to live user balance and updates in real-time from Firestore
+  useEffect(() => {
+    if (!user.isLoggedIn || !user.email) return;
+
+    const unsubscribeUser = listenToLiveUser(user.email, (liveData) => {
+      setBalance(liveData.balance);
+      if (liveData.orders) {
+        setOrders(liveData.orders);
+      }
+      if (liveData.photoUrl && liveData.photoUrl !== user.photoUrl) {
+        setUser(prev => ({ ...prev, photoUrl: liveData.photoUrl }));
+      }
+    });
+
+    return () => {
+      unsubscribeUser();
+    };
+  }, [user.email, user.isLoggedIn]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -201,13 +235,12 @@ export default function App() {
     }
   };
 
-  const handleAddMoneySuccess = (amount: number) => {
+  const handleAddMoneySuccess = (amount: number, reqId?: string) => {
     if (!user.isLoggedIn || !user.email) return;
 
-    const updated = balance + amount;
-    updateWalletBalance(updated, user.email);
-    setBalance(updated);
-    showToast(`৳${amount} টাকা যোগের রিকুয়েস্ট সফল হয়েছে! নতুন ব্যালেন্স: ৳${updated}`);
+    // Refresh orders so the pending deposit appears in the order history
+    setOrders(getLocalOrders(user.email));
+    showToast(`৳${amount} টাকা অ্যাড করার রিকোয়েস্ট সাবমিট হয়েছে! অ্যাডমিন অনুমোদন করলেই ব্যালেন্স যোগ হবে।`);
   };
 
   const handleOpenAuthModal = (mode: 'login' | 'register' = 'login') => {

@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 const FIREBASE_CONFIG = {
   projectId: "amarstore-e6a3f",
@@ -451,9 +451,9 @@ export async function fetchLiveSettings(): Promise<AppSettings> {
 
       const settings: AppSettings = {
         headerLogo: data.headerLogo || FALLBACK_SETTINGS.headerLogo,
-        noticeText: data.noticeText || FALLBACK_SETTINGS.noticeText,
+        noticeText: data.noticeText !== undefined ? data.noticeText : FALLBACK_SETTINGS.noticeText,
         favicon: data.favicon || FALLBACK_SETTINGS.favicon,
-        sliderData: sliderData.length > 0 ? sliderData : FALLBACK_SETTINGS.sliderData,
+        sliderData: Array.isArray(data.sliderData) ? sliderData : FALLBACK_SETTINGS.sliderData,
         payments: {
           bkash: payments.bkash || FALLBACK_SETTINGS.payments.bkash,
           bkashImg: payments.bkashImg || FALLBACK_SETTINGS.payments.bkashImg,
@@ -557,10 +557,11 @@ export async function fetchLiveCategories(): Promise<Category[]> {
       // Sort by priority
       categories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
 
-      if (categories.length > 0) {
-        localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
-        return categories;
-      }
+      localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+      return categories;
+    } else {
+      localStorage.setItem('amar_store_live_categories', JSON.stringify([]));
+      return [];
     }
   } catch (err) {
     console.warn("Failed to fetch fresh live categories via Web SDK, trying local cache", err);
@@ -659,6 +660,132 @@ export function updateWalletBalance(newBal: number, userEmail?: string): void {
   } catch (err) {
     console.error("Error updating balance", err);
   }
+}
+
+// Live real-time listener for user balance and orders from Firestore
+export function listenToLiveUser(email: string, onUpdate: (data: { balance: number; orders?: Order[]; name?: string; photoUrl?: string }) => void): () => void {
+  if (!email) return () => {};
+  const cleanEmail = email.trim().toLowerCase();
+  const userRef = doc(db, 'users', cleanEmail);
+  
+  return onSnapshot(userRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      const currentBalance = typeof data.balance === 'number' ? data.balance : 0;
+      const key = getStorageKeyForUser('amar_store_wallet_balance', cleanEmail);
+      localStorage.setItem(key, String(currentBalance));
+      
+      onUpdate({
+        balance: currentBalance,
+        orders: Array.isArray(data.orders) ? data.orders : undefined,
+        name: data.name,
+        photoUrl: data.photoUrl
+      });
+    }
+  }, (err) => {
+    console.warn("User live listener notice:", err);
+  });
+}
+
+// Live real-time listener for categories
+export function listenToLiveCategories(onUpdate: (categories: Category[]) => void): () => void {
+  const catCol = collection(db, 'categories');
+  return onSnapshot(catCol, (snapshot) => {
+    if (snapshot.empty) {
+      onUpdate([]);
+      return;
+    }
+    const categories: Category[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const catName = data.name || "Category";
+      const priority = Number(data.priority || 99);
+      const rawProducts = data.products || [];
+
+      const products = rawProducts.map((p: any) => {
+        const rawPackages = p.packages || [];
+        const packages = rawPackages.map((pkg: any) => ({
+          name: pkg.name || "Standard",
+          price: Number(pkg.price || 0),
+        }));
+
+        const prodName = p.name || p.title || "Product";
+        const prodPrice = Number(p.price || p.offerPrice || 0);
+        const finalPackages = packages.length > 0 ? packages : [{ name: p.duration || "Standard", price: prodPrice }];
+
+        return {
+          name: prodName,
+          image: p.image || "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg",
+          status: (p.status === 'out' ? 'out' : 'in') as 'in' | 'out',
+          avgRating: p.avgRating || "5.0",
+          delivery: p.delivery || "Instant (5-15 min)",
+          inputLabel: p.inputLabel || "Player ID / Email",
+          description: p.description || p.desc || p.details || p.info || p.rules || p.productDescription || p.instruction || "",
+          packages: finalPackages,
+          categoryName: catName,
+        };
+      });
+
+      categories.push({
+        id: docSnap.id,
+        name: catName,
+        priority,
+        products,
+      });
+    });
+
+    categories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+    localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+    onUpdate(categories);
+  }, (err) => {
+    console.warn("Categories live listener notice:", err);
+  });
+}
+
+// Submit Add Money / Deposit request (Pending Admin Approval)
+export async function submitDepositRequest(request: {
+  userEmail: string;
+  userName: string;
+  amount: number;
+  method: 'bkash' | 'nagad';
+  senderPhone: string;
+  trxId: string;
+}): Promise<string> {
+  const reqId = "DEP-" + Date.now().toString().slice(-6);
+  const cleanEmail = request.userEmail.trim().toLowerCase();
+  
+  // Save to Firestore deposit_requests collection
+  const depRef = doc(db, 'deposit_requests', reqId);
+  await setDoc(depRef, {
+    id: reqId,
+    userEmail: cleanEmail,
+    userName: request.userName,
+    amount: request.amount,
+    method: request.method,
+    senderPhone: request.senderPhone,
+    trxId: request.trxId,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  });
+
+  // Also record in orders/transactions for user visibility as pending
+  const depositOrder: Order = {
+    id: reqId,
+    product: `Wallet Deposit (${request.method === 'bkash' ? 'bKash' : 'Nagad'})`,
+    package: `টাকা অ্যাড রিকোয়েস্ট`,
+    price: request.amount,
+    playerInfo: `নম্বর: ${request.senderPhone}`,
+    status: 'Pending',
+    method: request.method === 'bkash' ? 'bKash Manual' : 'Nagad Manual',
+    trx: request.trxId,
+    senderPhone: request.senderPhone,
+    timeString: new Date().toLocaleString('bn-BD'),
+    timestamp: Date.now()
+  };
+
+  saveLocalOrder(depositOrder, cleanEmail);
+
+  return reqId;
 }
 
 // Reviews service

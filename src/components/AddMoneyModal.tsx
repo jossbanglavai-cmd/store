@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Wallet, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
+import { X, Copy, Check, Wallet, AlertCircle, ArrowRight, LogIn, Clock } from 'lucide-react';
 import { AppSettings, UserProfile } from '../types';
+import { submitDepositRequest } from '../services/storeService';
 
 interface Props {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface Props {
   settings: AppSettings;
   user: UserProfile;
   onRequireLogin: () => void;
-  onAddMoneySuccess: (amount: number) => void;
+  onAddMoneySuccess: (amount: number, reqId?: string) => void;
 }
 
 export const AddMoneyModal: React.FC<Props> = ({
@@ -39,7 +40,7 @@ export const AddMoneyModal: React.FC<Props> = ({
     setTimeout(() => setCopiedNum(false), 2000);
   };
 
-  const handleAddMoney = (e: React.FormEvent) => {
+  const handleAddMoney = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -64,11 +65,23 @@ export const AddMoneyModal: React.FC<Props> = ({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      onAddMoneySuccess(numAmount);
+    try {
+      const reqId = await submitDepositRequest({
+        userEmail: user.email,
+        userName: user.name || 'User',
+        amount: numAmount,
+        method,
+        senderPhone: senderPhone.trim(),
+        trxId: trxId.trim()
+      });
+
+      onAddMoneySuccess(numAmount, reqId);
       setIsSubmitting(false);
       onClose();
-    }, 700);
+    } catch (err: any) {
+      setErrorMsg('রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে: ' + (err?.message || 'অনুগ্রহ করে আবার চেষ্টা করুন'));
+      setIsSubmitting(false);
+    }
   };
 
 
@@ -212,14 +225,20 @@ export const AddMoneyModal: React.FC<Props> = ({
             />
           </div>
 
+          {/* Info note */}
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+            <Clock className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <span>টাকা পাঠানোর পর রিকোয়েস্ট সাবমিট করুন। অ্যাডমিন ভেরিফাই করে অনুমোদন (Approve) করলেই আপনার একাউন্টে ব্যালেন্স যুক্ত হবে।</span>
+          </div>
+
           {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-sm tracking-wide transition flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+            className="w-full py-3 bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-black rounded-xl font-bold text-sm tracking-wide transition flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
-              <span>যাচাই করা হচ্ছে...</span>
+              <span>রিকোয়েস্ট পাঠানো হচ্ছে...</span>
             ) : !user.isLoggedIn ? (
               <>
                 <LogIn className="w-4 h-4 text-amber-400" />
@@ -227,7 +246,7 @@ export const AddMoneyModal: React.FC<Props> = ({
               </>
             ) : (
               <>
-                <span>টাকা অ্যাড করুন</span>
+                <span>রিকোয়েস্ট সাবমিট করুন</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

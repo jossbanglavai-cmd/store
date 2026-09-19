@@ -59,8 +59,16 @@
           class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center">
           লগইন করুন <i class="fa-solid fa-arrow-right ml-2"></i>
         </button>
+        <div class="relative flex items-center justify-center my-2">
+          <div class="border-t border-slate-800 w-full"></div>
+          <span class="bg-slate-900 px-2 text-xs text-slate-500 uppercase">অথবা</span>
+        </div>
+        <button onclick="loginWithGoogleAdmin()"
+          class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 px-6 rounded-xl border border-slate-700 transition duration-200 flex items-center justify-center gap-2 cursor-pointer text-sm">
+          <i class="fa-brands fa-google text-red-400"></i> Google দিয়ে লগইন করুন
+        </button>
       </div>
-      <p class="text-xs text-slate-500 text-center mt-6">রুলস অনুযায়ী <span class="text-amber-400 font-mono">trxrafiff@gmail.com</span> একাউন্টের পাসওয়ার্ড ব্যবহার করুন।</p>
+      <p class="text-xs text-slate-500 text-center mt-6">অ্যাডমিন হিসেবে <span class="text-amber-400 font-mono">trxrafiff@gmail.com</span> অথবা <span class="text-amber-400 font-mono">nuhu001nh@gmail.com</span> ব্যবহার করুন।</p>
     </div>
   </div>
 
@@ -106,22 +114,29 @@
 
     <!-- TABS NAVIGATION -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-6 custom-scrollbar border-b border-slate-800">
-      <button onclick="switchTab('products')" id="tabBtn-products" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer">
+      <button onclick="switchTab('products')" id="tabBtn-products" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer">
         <i class="fa-solid fa-box-open"></i> প্রোডাক্ট ম্যানেজমেন্ট
       </button>
-      <button onclick="switchTab('orders')" id="tabBtn-orders" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+      <button onclick="switchTab('categories')" id="tabBtn-categories" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-layer-group"></i> ক্যাটাগরি ম্যানেজমেন্ট
+      </button>
+      <button onclick="switchTab('deposits')" id="tabBtn-deposits" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer relative">
+        <i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> ডিপোজিট রিকোয়েস্ট
+        <span id="depositBadge" class="hidden ml-1 px-1.5 py-0.2 bg-emerald-500 text-slate-950 text-[10px] font-black rounded-full">0</span>
+      </button>
+      <button onclick="switchTab('orders')" id="tabBtn-orders" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
         <i class="fa-solid fa-receipt"></i> অর্ডার হিস্ট্রি
       </button>
-      <button onclick="switchTab('users')" id="tabBtn-users" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+      <button onclick="switchTab('users')" id="tabBtn-users" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
         <i class="fa-solid fa-users"></i> ইউজার ও ব্যালেন্স
       </button>
-      <button onclick="switchTab('notice')" id="tabBtn-notice" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
-        <i class="fa-solid fa-bullhorn"></i> নোটিশ, হেল্পলাইন ও স্লাইডার
+      <button onclick="switchTab('notice')" id="tabBtn-notice" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-bullhorn"></i> নোটিশ ও স্লাইডার
       </button>
-      <button onclick="switchTab('payments')" id="tabBtn-payments" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
-        <i class="fa-solid fa-wallet"></i> বিকাশ ও নগদ (বিকাশ/নগদ)
+      <button onclick="switchTab('payments')" id="tabBtn-payments" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-wallet"></i> পেমেন্ট গেটওয়ে
       </button>
-      <button onclick="switchTab('reviews')" id="tabBtn-reviews" class="tab-btn px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
+      <button onclick="switchTab('reviews')" id="tabBtn-reviews" class="tab-btn px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 whitespace-nowrap bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">
         <i class="fa-solid fa-star"></i> রিভিউ ম্যানেজমেন্ট
       </button>
     </div>
@@ -232,6 +247,77 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- TAB: CATEGORY MANAGEMENT -->
+    <div id="tabContent-categories" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- ADD CATEGORY FORM -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl h-fit">
+          <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <i class="fa-solid fa-folder-plus"></i> নতুন ক্যাটাগরি তৈরি করুন
+          </h2>
+
+          <form id="categoryForm" onsubmit="handleSaveCategory(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">ক্যাটাগরির নাম (Category Name) *</label>
+              <input type="text" id="catNameInput" required placeholder="যেমন: Free Fire Top Up, OTT Subscriptions" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">সিরিয়াল / প্রায়োরিটি (Priority Order)</label>
+              <input type="number" id="catPriorityInput" placeholder="1, 2, 3..." value="1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+              <p class="text-[10px] text-slate-500 mt-0.5">১ দিলে সবার প্রথমে থাকবে, ২ দিলে দ্বিতীয় অবস্থানে।</p>
+            </div>
+
+            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+              <i class="fa-solid fa-save"></i> ক্যাটাগরি সেভ করুন
+            </button>
+          </form>
+        </div>
+
+        <!-- CATEGORY LIST -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-amber-400"></i> বর্তমান ক্যাটাগরি সমূহ
+              </h2>
+              <p class="text-xs text-slate-400">যেকোনো ক্যাটাগরি মুছুন বা নতুন প্রোডাক্ট যোগের জন্য প্রস্তুত রাখুন</p>
+            </div>
+            <button onclick="loadCategoriesData()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300">
+              <i class="fa-solid fa-rotate mr-1"></i> রিফ্রেশ
+            </button>
+          </div>
+
+          <div id="categoryListContainer" class="space-y-3">
+            <p class="text-slate-500 text-sm text-center py-8">ক্যাটাগরি লোড হচ্ছে...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB: DEPOSIT / ADD MONEY REQUESTS -->
+    <div id="tabContent-deposits" class="tab-content hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> টাকা অ্যাড / ডিপোজিট রিকোয়েস্ট (Pending Approval)
+            </h2>
+            <p class="text-xs text-slate-400">ইউজারের টাকা পাঠানোর রিকোয়েস্ট ভেরিফাই করে "এপ্রুভ" করলেই স্বয়ংক্রিয়ভাবে তার একাউন্টে ব্যালেন্স যোগ হবে</p>
+          </div>
+          <button onclick="loadDepositRequests()" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-sm flex items-center gap-2 self-end">
+            <i class="fa-solid fa-rotate"></i> রিফ্রেশ ডাটা
+          </button>
+        </div>
+
+        <div id="depositsContainer" class="space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar">
+          <p class="text-slate-500 text-sm text-center py-8">ডিপোজিট রিকোয়েস্ট লোড হচ্ছে...</p>
+        </div>
       </div>
     </div>
 
@@ -508,12 +594,32 @@
       }
     }
 
-    function checkPreviousLogin() {
-      if (localStorage.getItem('amar_store_admin_authenticated') === 'true') {
+    async function loginWithGoogleAdmin() {
+      const errorEl = document.getElementById('loginError');
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebase.auth().signInWithPopup(provider);
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('adminMainContent').classList.remove('hidden');
+        localStorage.setItem('amar_store_admin_authenticated', 'true');
         initializeAdminData();
+      } catch (err) {
+        errorEl.textContent = 'Google লগইন ব্যর্থ হয়েছে: ' + err.message;
+        errorEl.classList.remove('hidden');
       }
+    }
+
+    function checkPreviousLogin() {
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user || localStorage.getItem('amar_store_admin_authenticated') === 'true') {
+          document.getElementById('loginOverlay').classList.add('hidden');
+          document.getElementById('adminMainContent').classList.remove('hidden');
+          initializeAdminData();
+        } else {
+          document.getElementById('loginOverlay').classList.remove('hidden');
+          document.getElementById('adminMainContent').classList.add('hidden');
+        }
+      });
     }
 
     function logoutAdmin() {
@@ -589,6 +695,7 @@
     // INITIALIZE ALL TABS
     function initializeAdminData() {
       loadCategoriesData();
+      loadDepositRequests();
       loadSettingsData();
       loadOrdersData();
       loadUsersData();
@@ -614,6 +721,8 @@
       activeBtn.classList.remove('bg-slate-800', 'text-slate-300', 'hover:bg-slate-700');
 
       // Specific tab loads
+      if (tabId === 'categories') loadCategoriesData();
+      if (tabId === 'deposits') loadDepositRequests();
       if (tabId === 'orders') loadOrdersData();
       if (tabId === 'users') loadUsersData();
       if (tabId === 'reviews') loadReviewsData();
@@ -631,29 +740,339 @@
       }, 3000);
     }
 
-    // TAB 1: PRODUCT FUNCTIONS
+    // TAB: CATEGORY MANAGEMENT & PRODUCT FUNCTIONS
     async function loadCategoriesData() {
       try {
         const cached = localStorage.getItem('amar_store_live_categories');
         if (cached) {
           globalCategories = JSON.parse(cached);
           renderProductList(globalCategories);
+          renderCategoryList(globalCategories);
+          populateCategoryDropdown(globalCategories);
         }
 
         const snapshot = await db.collection('categories').get();
         if (!snapshot.empty) {
           const loadedCats = [];
           snapshot.forEach(doc => {
-            loadedCats.push(doc.data());
+            loadedCats.push({ id: doc.id, ...doc.data() });
           });
           if (loadedCats.length > 0) {
+            loadedCats.sort((a, b) => (a.priority || 99) - (b.priority || 99));
             globalCategories = loadedCats;
             localStorage.setItem('amar_store_live_categories', JSON.stringify(loadedCats));
             renderProductList(loadedCats);
+            renderCategoryList(loadedCats);
+            populateCategoryDropdown(loadedCats);
           }
         }
       } catch (e) {
         console.warn('Firestore load notice:', e);
+      }
+    }
+
+    function populateCategoryDropdown(categories) {
+      const select = document.getElementById('prodCategory');
+      if (!select) return;
+      if (!categories || categories.length === 0) {
+        select.innerHTML = '<option value="General">General</option>';
+        return;
+      }
+      select.innerHTML = categories.map(c => `
+        <option value="${c.name}">${c.name}</option>
+      `).join('');
+    }
+
+    function renderCategoryList(categories) {
+      const container = document.getElementById('categoryListContainer');
+      if (!container) return;
+      if (!categories || categories.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">কোনো ক্যাটাগরি তৈরি করা হয়নি।</p>';
+        return;
+      }
+
+      let html = '';
+      categories.forEach((cat, idx) => {
+        const prodCount = cat.products?.length || 0;
+        html += `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20">
+                ${cat.priority || (idx + 1)}
+              </div>
+              <div>
+                <h4 class="font-bold text-white text-base">${cat.name || 'Category'}</h4>
+                <p class="text-xs text-slate-400">সিরিয়াল: ${cat.priority || (idx + 1)} • মোট প্রোডাক্ট: <span class="text-amber-400 font-semibold">${prodCount} টি</span></p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="editCategoryName(${idx})" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer">
+                <i class="fa-solid fa-pen-to-square mr-1"></i> নাম পরিবর্তন
+              </button>
+              <button onclick="deleteCategoryItem(${idx})" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 p-2 rounded-lg text-xs cursor-pointer" title="ক্যাটাগরি মুছুন">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    async function handleSaveCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('catNameInput').value.trim();
+      const priority = Number(document.getElementById('catPriorityInput').value) || 1;
+
+      if (!name) return alert('ক্যাটাগরির নাম লিখুন');
+
+      // Check if already exists
+      const existingIdx = globalCategories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+      if (existingIdx !== -1) {
+        globalCategories[existingIdx].priority = priority;
+      } else {
+        globalCategories.push({
+          id: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          name: name,
+          priority: priority,
+          products: []
+        });
+      }
+
+      globalCategories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      await syncCategoriesToFirestore();
+      
+      document.getElementById('categoryForm').reset();
+      document.getElementById('catPriorityInput').value = globalCategories.length + 1;
+      
+      renderCategoryList(globalCategories);
+      renderProductList(globalCategories);
+      populateCategoryDropdown(globalCategories);
+      showToast(`'${name}' ক্যাটাগরি সফলভাবে তৈরি ও সংরক্ষণ করা হয়েছে!`);
+    }
+
+    async function editCategoryName(idx) {
+      if (!globalCategories[idx]) return;
+      const oldName = globalCategories[idx].name;
+      const newName = prompt('ক্যাটাগরির নতুন নাম লিখুন:', oldName);
+      if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+
+      globalCategories[idx].name = newName.trim();
+      if (globalCategories[idx].products) {
+        globalCategories[idx].products.forEach(p => p.categoryName = newName.trim());
+      }
+
+      await syncCategoriesToFirestore();
+      renderCategoryList(globalCategories);
+      renderProductList(globalCategories);
+      populateCategoryDropdown(globalCategories);
+      showToast('ক্যাটাগরির নাম আপডেট করা হয়েছে!');
+    }
+
+    async function deleteCategoryItem(idx) {
+      if (!globalCategories[idx]) return;
+      const cat = globalCategories[idx];
+      if (!confirm(`আপনি কি নিশ্চিত যে '${cat.name}' ক্যাটাগরি এবং এর সকল প্রোডাক্ট মুছে ফেলতে চান?`)) return;
+
+      const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      try {
+        await db.collection('categories').doc(catId).delete();
+      } catch (err) {
+        console.warn('Firestore doc delete notice:', err);
+      }
+
+      globalCategories.splice(idx, 1);
+      localStorage.setItem('amar_store_live_categories', JSON.stringify(globalCategories));
+      renderCategoryList(globalCategories);
+      renderProductList(globalCategories);
+      populateCategoryDropdown(globalCategories);
+      showToast('ক্যাটাগরি মুছে ফেলা হয়েছে!');
+    }
+
+    // TAB: DEPOSIT / ADD MONEY FUNCTIONS
+    async function loadDepositRequests() {
+      const container = document.getElementById('depositsContainer');
+      const badge = document.getElementById('depositBadge');
+      if (!container) return;
+
+      container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">ডিপোজিট রিকোয়েস্ট লোড হচ্ছে...</p>';
+
+      try {
+        const snapshot = await db.collection('deposit_requests').get();
+        const deposits = [];
+        snapshot.forEach(doc => {
+          deposits.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by createdAt descending
+        deposits.sort((a, b) => {
+          const aT = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bT = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bT - aT;
+        });
+
+        const pendingCount = deposits.filter(d => d.status === 'pending').length;
+        if (badge) {
+          if (pendingCount > 0) {
+            badge.textContent = pendingCount;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
+
+        if (deposits.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">কোনো টাকা অ্যাড / ডিপোজিট রিকোয়েস্ট নেই।</p>';
+          return;
+        }
+
+        let html = '';
+        deposits.forEach(dep => {
+          const timeStr = dep.createdAt ? new Date(dep.createdAt).toLocaleString('bn-BD') : 'সাম্প্রতিক';
+          const isPending = dep.status === 'pending';
+          const isApproved = dep.status === 'approved';
+          const isRejected = dep.status === 'rejected';
+
+          html += `
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <span class="font-mono font-bold text-xs bg-slate-800 px-2 py-0.5 rounded text-amber-400">#${dep.id}</span>
+                  <span class="text-[10px] bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded">${timeStr}</span>
+                  <span class="text-xs uppercase font-bold px-2 py-0.5 rounded ${dep.method === 'bkash' ? 'bg-pink-950/60 text-pink-400 border border-pink-500/20' : 'bg-orange-950/60 text-orange-400 border border-orange-500/20'}">
+                    ${dep.method === 'bkash' ? 'bKash Manual' : 'Nagad Manual'}
+                  </span>
+                  <span class="text-xs px-2 py-0.5 rounded font-bold ${isApproved ? 'bg-emerald-500/20 text-emerald-400' : isRejected ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">
+                    ${isApproved ? 'Approved (অনুমোদিত)' : isRejected ? 'Rejected (বাতিল)' : 'Pending Approval (পেন্ডিং)'}
+                  </span>
+                </div>
+
+                <div class="text-sm text-slate-300 space-y-0.5">
+                  <p>ইউজার ইমেইল: <span class="text-white font-mono font-semibold">${dep.userEmail}</span> ${dep.userName ? `(${dep.userName})` : ''}</p>
+                  <p>টাকা পাঠানোর নম্বর (Sender Phone): <span class="text-amber-300 font-mono font-bold">${dep.senderPhone}</span></p>
+                  <p>ট্রানজেকশন আইডি (TrxID): <span class="text-emerald-400 font-mono font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/20">${dep.trxId}</span></p>
+                  <p>টাকার পরিমাণ: <span class="text-amber-400 font-black text-lg">৳${dep.amount}</span></p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 self-start md:self-center flex-wrap">
+                ${isPending ? `
+                  <button onclick="approveDepositRequest('${dep.id}', '${dep.userEmail}', ${dep.amount})" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-check"></i> এপ্রুভ করুন (টাকা যোগ হবে)
+                  </button>
+                  <button onclick="rejectDepositRequest('${dep.id}', '${dep.userEmail}')" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 font-bold text-xs px-3 py-2.5 rounded-xl cursor-pointer flex items-center gap-1">
+                    <i class="fa-solid fa-ban"></i> বাতিল করুন
+                  </button>
+                ` : `
+                  <span class="text-xs text-slate-500 italic">সম্পন্ন হয়েছে</span>
+                `}
+                <button onclick="deleteDepositRequest('${dep.id}')" class="bg-slate-800 text-slate-400 hover:text-red-400 p-2 rounded-xl text-xs cursor-pointer" title="মুছে ফেলুন">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = '<p class="text-slate-500 text-sm text-center py-8">ডিপোজিট রিকোয়েস্ট লোড করতে ব্যর্থ: ' + err.message + '</p>';
+      }
+    }
+
+    async function approveDepositRequest(depId, userEmail, amount) {
+      if (!confirm(`আপনি কি নিশ্চিত যে ৳${amount} টাকা ${userEmail} এর একাউন্টে যোগ করে এপ্রুভ করতে চান?`)) return;
+
+      const cleanEmail = userEmail.trim().toLowerCase();
+      try {
+        // 1. Mark deposit as approved
+        await db.collection('deposit_requests').doc(depId).update({
+          status: 'approved',
+          approvedAt: new Date().toISOString()
+        });
+
+        // 2. Fetch and increment user balance in Firestore
+        const userRef = db.collection('users').doc(cleanEmail);
+        const userSnap = await userRef.get();
+        let currentBalance = 0;
+        let userOrders = [];
+        if (userSnap.exists) {
+          const uData = userSnap.data();
+          currentBalance = typeof uData.balance === 'number' ? uData.balance : 0;
+          userOrders = Array.isArray(uData.orders) ? uData.orders : [];
+        }
+
+        const newBalance = currentBalance + Number(amount);
+
+        // Update corresponding deposit in user orders to Success
+        const updatedOrders = userOrders.map(ord => {
+          if (ord.id === depId || (ord.trx && ord.trx === depId)) {
+            return { ...ord, status: 'Success' };
+          }
+          return ord;
+        });
+
+        await userRef.set({
+          email: cleanEmail,
+          balance: newBalance,
+          orders: updatedOrders,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        // Update active localStorage if applicable
+        const activeLocalKey = 'amar_store_wallet_balance_' + cleanEmail;
+        localStorage.setItem(activeLocalKey, String(newBalance));
+
+        showToast(`৳${amount} ডিপোজিট সফলভাবে অনুমোদন হয়েছে! নতুন ব্যালেন্স: ৳${newBalance}`);
+        loadDepositRequests();
+        loadUsersData();
+      } catch (err) {
+        alert('ডিপোজিট অনুমোদন করতে সমস্যা হয়েছে: ' + err.message);
+      }
+    }
+
+    async function rejectDepositRequest(depId, userEmail) {
+      if (!confirm('আপনি কি এই ডিপোজিট রিকোয়েস্টটি বাতিল করতে চান?')) return;
+
+      const cleanEmail = userEmail.trim().toLowerCase();
+      try {
+        await db.collection('deposit_requests').doc(depId).update({
+          status: 'rejected',
+          rejectedAt: new Date().toISOString()
+        });
+
+        // Update user order to Cancel
+        const userRef = db.collection('users').doc(cleanEmail);
+        const userSnap = await userRef.get();
+        if (userSnap.exists) {
+          const uData = userSnap.data();
+          const userOrders = Array.isArray(uData.orders) ? uData.orders : [];
+          const updatedOrders = userOrders.map(ord => {
+            if (ord.id === depId) {
+              return { ...ord, status: 'Cancel' };
+            }
+            return ord;
+          });
+          await userRef.update({ orders: updatedOrders });
+        }
+
+        showToast('ডিপোজিট রিকোয়েস্ট বাতিল করা হয়েছে!');
+        loadDepositRequests();
+      } catch (err) {
+        alert('বাতিল করতে সমস্যা হয়েছে: ' + err.message);
+      }
+    }
+
+    async function deleteDepositRequest(depId) {
+      if (!confirm('আপনি কি এই রিকোয়েস্টটি ডিলিট করতে চান?')) return;
+      try {
+        await db.collection('deposit_requests').doc(depId).delete();
+        showToast('ডিপোজিট রিকোয়েস্ট মুছে ফেলা হয়েছে!');
+        loadDepositRequests();
+      } catch (err) {
+        alert('মুছতে সমস্যা হয়েছে: ' + err.message);
       }
     }
 
@@ -823,7 +1242,8 @@
           }, { merge: true });
         }
       } catch (err) {
-        console.warn('Firestore categories sync notice', err);
+        console.error('Firestore categories sync error:', err);
+        alert('ফায়ারবেসে সংরক্ষণ ব্যর্থ হয়েছে: ' + (err.message || 'সিকিউরিটি রুলস বা কানেকশন ত্রুটি'));
       }
     }
 
@@ -967,24 +1387,29 @@
       const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
       const amount = Number(document.getElementById('addAmountInput').value) || 0;
 
-      if (!email || amount <= 0) return alert('সঠিক ইমেইল ও টাকার পরিমাণ প্রদান করুন');
+      if (!email || isNaN(amount)) return alert('সঠিক ইমেইল ও টাকার পরিমাণ প্রদান করুন');
 
       try {
         const userRef = db.collection('users').doc(email);
         const docSnap = await userRef.get();
         let currentBalance = 0;
         if (docSnap.exists) {
-          currentBalance = docSnap.data().balance || 0;
+          currentBalance = typeof docSnap.data().balance === 'number' ? docSnap.data().balance : 0;
         }
 
+        const newBal = Math.max(0, currentBalance + amount);
+
         await userRef.set({
-          balance: currentBalance + amount,
+          email: email,
+          balance: newBal,
           updatedAt: new Date().toISOString()
         }, { merge: true });
 
+        localStorage.setItem('amar_store_wallet_balance_' + email, String(newBal));
+
         document.getElementById('userEmailInput').value = '';
         document.getElementById('addAmountInput').value = '';
-        showToast(`৳${amount} সফলভাবে ${email} এর অ্যাকাউন্টে যুক্ত হয়েছে!`);
+        showToast(`৳${amount} সফলভাবে ${email} এর অ্যাকাউন্টে যুক্ত হয়েছে! নতুন ব্যালেন্স: ৳${newBal}`);
         loadUsersData();
       } catch (err) {
         alert('ব্যালেন্স যুক্ত করতে সমস্যা হয়েছে: ' + err.message);
@@ -992,16 +1417,22 @@
     }
 
     async function quickEditUserBalance(email, currentBalance) {
-      const newAmount = prompt(`ইমেইল: ${email}\nবর্তমান ব্যালেন্স: ৳${currentBalance}\n\nনতুন ব্যালেন্স সেট করুন (টাকার পরিমাণ লিখুন):`, currentBalance);
+      const cleanEmail = email.trim().toLowerCase();
+      const newAmount = prompt(`ইমেইল: ${cleanEmail}\nবর্তমান ব্যালেন্স: ৳${currentBalance}\n\nনতুন ব্যালেন্স সেট করুন (0 দিলে ব্যালেন্স শূন্য হবে):`, currentBalance);
       if (newAmount === null) return;
       const parsed = Number(newAmount);
-      if (isNaN(parsed) || parsed < 0) return alert('দয়া করে সঠিক টাকার অংক প্রদান করুন');
+      if (isNaN(parsed) || parsed < 0) return alert('দয়া করে সঠিক টাকার অংক প্রদান করুন (০ বা তার বেশি)');
 
       try {
-        await db.collection('users').doc(email).update({
+        const userRef = db.collection('users').doc(cleanEmail);
+        await userRef.set({
+          email: cleanEmail,
           balance: parsed,
           updatedAt: new Date().toISOString()
-        });
+        }, { merge: true });
+
+        localStorage.setItem('amar_store_wallet_balance_' + cleanEmail, String(parsed));
+
         showToast(`ব্যালেন্স সফলভাবে ৳${parsed} এ সেট করা হয়েছে!`);
         loadUsersData();
       } catch (e) {
@@ -1143,7 +1574,8 @@
       try {
         await db.collection('app_config').doc('settings').set(globalSettings, { merge: true });
       } catch (err) {
-        console.warn('Firestore settings save notice:', err);
+        console.error('Firestore settings save error:', err);
+        alert('ফায়ারবেসে সেটিংস সংরক্ষণ ব্যর্থ হয়েছে: ' + (err.message || 'সিকিউরিটি রুলস বা কানেকশন ত্রুটি'));
       }
     }
 
