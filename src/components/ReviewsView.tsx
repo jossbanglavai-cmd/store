@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Star, 
   Sparkles, 
@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Review, UserProfile } from '../types';
-import { getLocalAddedReviews } from '../services/storeService';
+import { getLocalAddedReviews, fetchLiveHelpfulCounts, updateLiveHelpfulCount } from '../services/storeService';
 
 interface Props {
   reviews: Review[];
@@ -65,6 +65,18 @@ export const ReviewsView: React.FC<Props> = ({
       return {};
     }
   });
+
+  // Fetch live global helpful counts from Firestore on mount
+  useEffect(() => {
+    fetchLiveHelpfulCounts().then(liveCounts => {
+      if (liveCounts && Object.keys(liveCounts).length > 0) {
+        setHelpfulCountsMap(prev => ({
+          ...prev,
+          ...liveCounts
+        }));
+      }
+    });
+  }, []);
 
   // Write review form state
   const [productName, setProductName] = useState(productNames[0] || 'Netflix');
@@ -154,12 +166,16 @@ export const ReviewsView: React.FC<Props> = ({
     setHelpfulMap(newHelpfulMap);
     setHelpfulCountsMap(newCountsMap);
 
+    // Save user's local vote state
     try {
       localStorage.setItem('amar_store_user_helpful_votes', JSON.stringify(newHelpfulMap));
       localStorage.setItem('amar_store_real_helpful_counts', JSON.stringify(newCountsMap));
     } catch (e) {
       console.warn("Could not save helpful votes to localStorage", e);
     }
+
+    // Synchronize global count to Firestore so all users see the update
+    updateLiveHelpfulCount(id, newCount, helpfulCountsMap);
   };
 
   const handleOpenWriteReview = () => {

@@ -646,3 +646,52 @@ export function saveUserReview(review: Review): void {
     console.error("Error saving review", err);
   }
 }
+
+export async function fetchLiveHelpfulCounts(): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/helpful_counts/global`);
+    if (!res.ok) {
+      const local = localStorage.getItem('amar_store_real_helpful_counts');
+      return local ? JSON.parse(local) : {};
+    }
+    const data = await res.json();
+    const fields = data.fields || {};
+    const counts: Record<string, number> = {};
+    for (const key in fields) {
+      const val = fields[key];
+      const num = Number(val.integerValue || val.doubleValue || 0);
+      counts[key] = num;
+    }
+    return counts;
+  } catch (err) {
+    console.warn("Failed to fetch live helpful counts", err);
+    try {
+      const local = localStorage.getItem('amar_store_real_helpful_counts');
+      return local ? JSON.parse(local) : {};
+    } catch {
+      return {};
+    }
+  }
+}
+
+export async function updateLiveHelpfulCount(reviewId: string, newCount: number, currentMap: Record<string, number>): Promise<void> {
+  try {
+    const updatedMap = { ...currentMap, [reviewId]: newCount };
+    const fields: Record<string, any> = {};
+    
+    for (const [k, v] of Object.entries(updatedMap)) {
+      fields[k] = { integerValue: String(v) };
+    }
+
+    await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/helpful_counts/global`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ fields })
+    });
+  } catch (err) {
+    console.warn("Failed to update live helpful count in Firestore", err);
+  }
+}
+
