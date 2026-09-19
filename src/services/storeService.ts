@@ -515,15 +515,16 @@ export async function fetchLiveCategories(): Promise<Category[]> {
   try {
     const querySnapshot = await getDocs(collection(db, 'categories'));
     if (!querySnapshot.empty) {
-      const categories: Category[] = [];
+      const categoriesMap = new Map<string, Category>();
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
-        const catName = data.name || "Category";
+        const catName = (data.name || "Category").trim();
+        if (!catName) return;
         const priority = Number(data.priority || 99);
-        const rawProducts = data.products || [];
+        const rawProducts = Array.isArray(data.products) ? data.products : [];
 
         const products = rawProducts.map((p: any) => {
-          const rawPackages = p.packages || [];
+          const rawPackages = Array.isArray(p.packages) ? p.packages : [];
           const packages = rawPackages.map((pkg: any) => ({
             name: pkg.name || "Standard",
             price: Number(pkg.price || 0),
@@ -546,7 +547,8 @@ export async function fetchLiveCategories(): Promise<Category[]> {
           };
         });
 
-        categories.push({
+        const key = catName.toLowerCase();
+        categoriesMap.set(key, {
           id: docSnap.id,
           name: catName,
           priority,
@@ -554,6 +556,7 @@ export async function fetchLiveCategories(): Promise<Category[]> {
         });
       });
 
+      const categories = Array.from(categoriesMap.values());
       // Sort by priority
       categories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
 
@@ -589,19 +592,24 @@ export async function saveLiveCategories(categories: Category[]): Promise<void> 
   try {
     // Delete obsolete documents from Firestore
     const querySnapshot = await getDocs(collection(db, 'categories'));
-    const activeIds = new Set(categories.map(c => (c.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_')));
+    const activeIds = new Set(categories.map(c => c.id).filter(Boolean));
+    const activeNames = new Set(categories.map(c => (c.name || '').trim().toLowerCase()));
+
     for (const docSnap of querySnapshot.docs) {
-      if (!activeIds.has(docSnap.id)) {
+      const docName = (docSnap.data()?.name || '').trim().toLowerCase();
+      if (!activeIds.has(docSnap.id) || !activeNames.has(docName)) {
         await deleteDoc(doc(db, 'categories', docSnap.id));
       }
     }
 
-    for (const cat of categories) {
-      const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+    for (let idx = 0; idx < categories.length; idx++) {
+      const cat = categories[idx];
+      const catId = cat.id || (cat.name || 'cat').toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + (idx + 1);
       const catRef = doc(db, 'categories', catId);
       await setDoc(catRef, {
+        id: catId,
         name: cat.name,
-        priority: cat.priority || 1,
+        priority: cat.priority || (idx + 1),
         products: cat.products || [],
         updatedAt: new Date().toISOString()
       });
@@ -786,18 +794,20 @@ export function listenToLiveCategories(onUpdate: (categories: Category[]) => voi
   const catCol = collection(db, 'categories');
   return onSnapshot(catCol, (snapshot) => {
     if (snapshot.empty) {
+      localStorage.setItem('amar_store_live_categories', JSON.stringify([]));
       onUpdate([]);
       return;
     }
-    const categories: Category[] = [];
+    const categoriesMap = new Map<string, Category>();
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      const catName = data.name || "Category";
+      const catName = (data.name || "Category").trim();
+      if (!catName) return;
       const priority = Number(data.priority || 99);
-      const rawProducts = data.products || [];
+      const rawProducts = Array.isArray(data.products) ? data.products : [];
 
       const products = rawProducts.map((p: any) => {
-        const rawPackages = p.packages || [];
+        const rawPackages = Array.isArray(p.packages) ? p.packages : [];
         const packages = rawPackages.map((pkg: any) => ({
           name: pkg.name || "Standard",
           price: Number(pkg.price || 0),
@@ -820,7 +830,8 @@ export function listenToLiveCategories(onUpdate: (categories: Category[]) => voi
         };
       });
 
-      categories.push({
+      const key = catName.toLowerCase();
+      categoriesMap.set(key, {
         id: docSnap.id,
         name: catName,
         priority,
@@ -828,6 +839,7 @@ export function listenToLiveCategories(onUpdate: (categories: Category[]) => voi
       });
     });
 
+    const categories = Array.from(categoriesMap.values());
     categories.sort((a, b) => (a.priority || 99) - (b.priority || 99));
     localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
     onUpdate(categories);

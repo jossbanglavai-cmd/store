@@ -754,8 +754,23 @@
         const snapshot = await db.collection('categories').get();
         if (!snapshot.empty) {
           const loadedCats = [];
-          snapshot.forEach(doc => {
-            loadedCats.push({ id: doc.id, ...doc.data() });
+          const seenNames = new Set();
+          snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const name = (data.name || '').trim();
+            if (!name) return;
+            const lower = name.toLowerCase();
+            if (seenNames.has(lower)) {
+              db.collection('categories').doc(docSnap.id).delete().catch(() => {});
+              return;
+            }
+            seenNames.add(lower);
+            loadedCats.push({
+              id: docSnap.id,
+              name: name,
+              priority: Number(data.priority || 1),
+              products: Array.isArray(data.products) ? data.products : []
+            });
           });
           if (loadedCats.length > 0) {
             loadedCats.sort((a, b) => (a.priority || 99) - (b.priority || 99));
@@ -824,17 +839,17 @@
     async function handleSaveCategory(e) {
       e.preventDefault();
       const name = document.getElementById('catNameInput').value.trim();
-      const priority = Number(document.getElementById('catPriorityInput').value) || 1;
+      const priority = Number(document.getElementById('catPriorityInput').value) || (globalCategories.length + 1);
 
       if (!name) return alert('ক্যাটাগরির নাম লিখুন');
 
-      // Check if already exists
       const existingIdx = globalCategories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
       if (existingIdx !== -1) {
         globalCategories[existingIdx].priority = priority;
       } else {
+        const catId = 'cat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
         globalCategories.push({
-          id: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          id: catId,
           name: name,
           priority: priority,
           products: []
@@ -876,15 +891,12 @@
       const cat = globalCategories[idx];
       if (!confirm(`আপনি কি নিশ্চিত যে '${cat.name}' ক্যাটাগরি এবং এর সকল প্রোডাক্ট মুছে ফেলতে চান?`)) return;
 
-      const docId = cat.id || (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const normalizedNameId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
-      try {
-        await db.collection('categories').doc(docId).delete();
-        if (docId !== normalizedNameId) {
-          await db.collection('categories').doc(normalizedNameId).delete();
+      if (cat.id) {
+        try {
+          await db.collection('categories').doc(cat.id).delete();
+        } catch (err) {
+          console.warn('Firestore doc delete notice:', err);
         }
-      } catch (err) {
-        console.warn('Firestore doc delete notice:', err);
       }
 
       globalCategories.splice(idx, 1);
@@ -1234,15 +1246,26 @@
     }
 
     async function syncCategoriesToFirestore() {
+      // Ensure every category has an id
+      globalCategories.forEach((cat, idx) => {
+        if (!cat.id || cat.id.trim() === '' || cat.id.includes('___')) {
+          const slug = (cat.name || 'cat').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/^_+|_+$/g, '');
+          cat.id = (slug ? slug : 'cat') + '_' + (idx + 1) + '_' + Math.random().toString(36).substring(2, 6);
+        }
+      });
+
       localStorage.setItem('amar_store_live_categories', JSON.stringify(globalCategories));
       try {
         // 1. Fetch current categories in Firestore to delete any obsolete documents
         const snapshot = await db.collection('categories').get();
-        const activeIds = new Set(globalCategories.map(c => (c.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_')));
+        const activeIds = new Set(globalCategories.map(c => c.id));
+        const activeNames = new Set(globalCategories.map(c => (c.name || '').trim().toLowerCase()));
         
         const deletePromises = [];
         snapshot.forEach(docSnap => {
-          if (!activeIds.has(docSnap.id)) {
+          const docData = docSnap.data() || {};
+          const docName = (docData.name || '').trim().toLowerCase();
+          if (!activeIds.has(docSnap.id) || !activeNames.has(docName)) {
             deletePromises.push(db.collection('categories').doc(docSnap.id).delete());
           }
         });
@@ -1251,12 +1274,13 @@
         }
 
         // 2. Save active categories with their current products list
-        for (const cat of globalCategories) {
-          const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
-          await db.collection('categories').doc(catId).set({
+        for (let idx = 0; idx < globalCategories.length; idx++) {
+          const cat = globalCategories[idx];
+          await db.collection('categories').doc(cat.id).set({
+            id: cat.id,
             name: cat.name,
-            priority: cat.priority || 1,
-            products: cat.products || [],
+            priority: Number(cat.priority || (idx + 1)),
+            products: Array.isArray(cat.products) ? cat.products : [],
             updatedAt: new Date().toISOString()
           });
         }
