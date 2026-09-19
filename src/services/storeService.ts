@@ -1,12 +1,13 @@
 import { AppSettings, Category, Order, Review, UserProfile } from '../types';
 import { FALLBACK_CATEGORIES, FALLBACK_SETTINGS } from '../data/fallbackData';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   updateProfile,
   signOut
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const FIREBASE_CONFIG = {
   projectId: "dshop-46653",
@@ -34,6 +35,37 @@ export const DEFAULT_USER: UserProfile = {
   joinDate: "",
   photoUrl: ""
 };
+
+// Firestore sync helpers for cross-browser & cross-device persistence
+async function syncUserToFirestore(email: string, data: { name?: string; memberId?: string; photoUrl?: string; balance?: number; orders?: Order[] }) {
+  try {
+    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const userRef = doc(db, 'users', cleanEmail);
+    await setDoc(userRef, {
+      email: cleanEmail,
+      ...data,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Firestore user sync notice:", err);
+  }
+}
+
+async function fetchUserFromFirestore(email: string): Promise<any> {
+  try {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    const userRef = doc(db, 'users', cleanEmail);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+  } catch (err) {
+    console.warn("Firestore fetch user notice:", err);
+  }
+  return null;
+}
 
 // Registered Accounts Registry Management
 export function getRegisteredAccounts(): Record<string, RegisteredAccount> {
@@ -118,6 +150,7 @@ export function updateUserProfilePhoto(photoUrl: string, userEmail?: string): Us
       accounts[email].photoUrl = photoUrl;
       saveRegisteredAccounts(accounts);
     }
+    syncUserToFirestore(email, { photoUrl });
   }
 
   if (auth.currentUser) {
@@ -159,7 +192,7 @@ export async function registerAccount(emailInput: string, passwordInput: string,
     }
   }
 
-  // 3. Save to local account registry
+  // 3. Save to local account registry & Firestore
   const memberId = "AS-" + Math.floor(100000 + Math.random() * 900000);
   const newAccount: RegisteredAccount = {
     email,
@@ -174,6 +207,13 @@ export async function registerAccount(emailInput: string, passwordInput: string,
 
   // Initialize fresh wallet and orders for this user
   updateWalletBalance(0, email);
+  syncUserToFirestore(email, {
+    name,
+    memberId,
+    photoUrl: "",
+    balance: 0,
+    orders: []
+  });
 
   const profile: UserProfile = {
     name,
@@ -181,14 +221,15 @@ export async function registerAccount(emailInput: string, passwordInput: string,
     phone: "",
     isLoggedIn: true,
     memberId,
-    joinDate: "আজ"
+    joinDate: "আজ",
+    photoUrl: ""
   };
 
   saveUserProfile(profile);
   return profile;
 }
 
-// Strict Login with verified credentials matching
+// Strict Login with verified credentials matching and cloud sync
 export async function loginAccount(emailInput: string, passwordInput: string): Promise<UserProfile> {
   const email = emailInput.trim().toLowerCase();
   const password = passwordInput.trim();
@@ -220,21 +261,35 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
     }
   }
 
-  // Validate with local registry
-  if (!existingAccount && !firebaseSuccess) {
+  // Fetch remote user data from Firestore (cross-browser / cross-device recovery)
+  const remoteData = await fetchUserFromFirestore(email);
+
+  // Validate with local registry or Firestore
+  if (!existingAccount && !firebaseSuccess && !remoteData) {
     throw new Error("এই ইমেইলে কোনো অ্যাকাউন্ট খোলা নেই! অনুগ্রহ করে প্রথমে নিচে 'রেজিস্ট্রেশন করুন' (Create Account) বাটনে ক্লিক করে আপনার অ্যাকাউন্ট খুলুন।");
   }
 
-  if (existingAccount && existingAccount.password !== password && !firebaseSuccess) {
+  if (existingAccount && existingAccount.password !== password && !firebaseSuccess && !remoteData) {
     throw new Error("ভুল পাসওয়ার্ড! এই ইমেইলের জন্য আপনি যে পাসওয়ার্ড দিয়ে রেজিস্ট্রেশন করেছিলেন তা সঠিক নয়।");
   }
 
-  const accountName = existingAccount?.name || auth.currentUser?.displayName || email.split('@')[0];
-  const memberId = existingAccount?.memberId || ("AS-" + Math.floor(100000 + Math.random() * 900000));
+  const accountName = remoteData?.name || existingAccount?.name || auth.currentUser?.displayName || email.split('@')[0];
+  const memberId = remoteData?.memberId || existingAccount?.memberId || ("AS-" + Math.floor(100000 + Math.random() * 900000));
+  const photoUrl = remoteData?.photoUrl || existingAccount?.photoUrl || auth.currentUser?.photoURL || "";
 
-  const photoUrl = existingAccount?.photoUrl || auth.currentUser?.photoURL || "";
+  // Restore balance & orders from Firestore if available
+  if (remoteData) {
+    if (typeof remoteData.balance === 'number') {
+      updateWalletBalance(remoteData.balance, email);
+    }
+    if (remoteData.orders && Array.isArray(remoteData.orders)) {
+      try {
+        localStorage.setItem(getStorageKeyForUser('amar_store_orders', email), JSON.stringify(remoteData.orders));
+      } catch {}
+    }
+  }
 
-  // If successfully logged in with Firebase but missing in local registry, sync it
+  // Sync back to local registry if missing
   if (!existingAccount) {
     accounts[email] = {
       email,
@@ -244,6 +299,9 @@ export async function loginAccount(emailInput: string, passwordInput: string): P
       createdAt: new Date().toISOString(),
       photoUrl
     };
+    saveRegisteredAccounts(accounts);
+  } else if (photoUrl && !existingAccount.photoUrl) {
+    existingAccount.photoUrl = photoUrl;
     saveRegisteredAccounts(accounts);
   }
 
@@ -485,6 +543,7 @@ export function saveLocalOrder(order: Order, userEmail?: string): void {
     const current = getLocalOrders(userEmail);
     const updated = [order, ...current];
     localStorage.setItem(key, JSON.stringify(updated));
+    syncUserToFirestore(userEmail, { orders: updated });
   } catch (err) {
     console.error("Error saving order", err);
   }
@@ -507,8 +566,10 @@ export function getWalletBalance(userEmail?: string): number {
 export function updateWalletBalance(newBal: number, userEmail?: string): void {
   try {
     if (!userEmail) return;
+    const bal = Math.max(0, newBal);
     const key = getStorageKeyForUser('amar_store_wallet_balance', userEmail);
-    localStorage.setItem(key, String(Math.max(0, newBal)));
+    localStorage.setItem(key, String(bal));
+    syncUserToFirestore(userEmail, { balance: bal });
   } catch (err) {
     console.error("Error updating balance", err);
   }
