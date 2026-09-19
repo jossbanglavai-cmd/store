@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Lock, LogOut, Package, ShoppingBag, Settings, Plus, Trash2, Edit3, Check, AlertCircle } from 'lucide-react';
 import { Category, Order, Product, AppSettings } from '../types';
+import { saveLiveCategories, saveLiveSettings } from '../services/storeService';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
@@ -106,8 +107,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
 
     onUpdateCategories(updatedCategories);
-    // Save to localStorage for persistence
-    localStorage.setItem('amar_store_live_categories', JSON.stringify(updatedCategories));
+    saveLiveCategories(updatedCategories);
     
     setSuccessMsg('প্রোডাক্ট সফলভাবে সংরক্ষণ করা হয়েছে!');
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -120,7 +120,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       const updatedCategories = [...categories];
       updatedCategories[catIdx].products.splice(prodIdx, 1);
       onUpdateCategories(updatedCategories);
-      localStorage.setItem('amar_store_live_categories', JSON.stringify(updatedCategories));
+      saveLiveCategories(updatedCategories);
       setSuccessMsg('প্রোডাক্ট মুছে ফেলা হয়েছে।');
       setTimeout(() => setSuccessMsg(''), 3000);
     }
@@ -131,7 +131,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     const prod = updatedCategories[catIdx].products[prodIdx];
     prod.status = prod.status === 'in' ? 'out' : 'in';
     onUpdateCategories(updatedCategories);
-    localStorage.setItem('amar_store_live_categories', JSON.stringify(updatedCategories));
+    saveLiveCategories(updatedCategories);
   };
 
   return (

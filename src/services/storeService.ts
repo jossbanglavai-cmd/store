@@ -497,6 +497,14 @@ const DEFAULT_REVIEWS: Review[] = [
 
 export async function fetchLiveSettings(): Promise<AppSettings> {
   try {
+    const cached = localStorage.getItem('amar_store_live_settings');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch {}
+
+  try {
     const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/app_config/settings`);
     if (!res.ok) return FALLBACK_SETTINGS;
     const data = await res.json();
@@ -511,7 +519,7 @@ export async function fetchLiveSettings(): Promise<AppSettings> {
 
     const paymentsFields = fields.payments?.mapValue?.fields || {};
 
-    return {
+    const settings: AppSettings = {
       headerLogo: fields.headerLogo?.stringValue || FALLBACK_SETTINGS.headerLogo,
       noticeText: fields.noticeText?.stringValue || FALLBACK_SETTINGS.noticeText,
       favicon: fields.favicon?.stringValue || FALLBACK_SETTINGS.favicon,
@@ -527,13 +535,49 @@ export async function fetchLiveSettings(): Promise<AppSettings> {
       popupIcon: fields.popupIcon?.stringValue || "",
       popupUrl: fields.popupUrl?.stringValue || "",
     };
+
+    localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
+    return settings;
   } catch (err) {
     console.warn("Failed to fetch live settings from Firestore, using fallback", err);
     return FALLBACK_SETTINGS;
   }
 }
 
+export async function saveLiveSettings(settings: AppSettings): Promise<void> {
+  try {
+    localStorage.setItem('amar_store_live_settings', JSON.stringify(settings));
+  } catch (err) {
+    console.error("Error saving settings to localStorage", err);
+  }
+
+  try {
+    const settingsRef = doc(db, 'app_config', 'settings');
+    await setDoc(settingsRef, {
+      headerLogo: settings.headerLogo || "",
+      noticeText: settings.noticeText || "",
+      sliderData: settings.sliderData || [],
+      payments: settings.payments || {},
+      walletPayImg: settings.walletPayImg || "",
+      manualPayImg: settings.manualPayImg || "",
+      popupIcon: settings.popupIcon || "",
+      popupUrl: settings.popupUrl || "",
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Firestore settings sync error:", err);
+  }
+}
+
 export async function fetchLiveCategories(): Promise<Category[]> {
+  try {
+    const cached = localStorage.getItem('amar_store_live_categories');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+
   try {
     const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/categories`);
     if (!res.ok) return FALLBACK_CATEGORIES;
@@ -579,10 +623,37 @@ export async function fetchLiveCategories(): Promise<Category[]> {
       };
     }).sort((a: Category, b: Category) => (a.priority || 99) - (b.priority || 99));
 
-    return categories.length > 0 ? categories : FALLBACK_CATEGORIES;
+    if (categories.length > 0) {
+      localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+      return categories;
+    }
+    return FALLBACK_CATEGORIES;
   } catch (err) {
     console.warn("Failed to fetch live categories from Firestore, using fallback", err);
     return FALLBACK_CATEGORIES;
+  }
+}
+
+export async function saveLiveCategories(categories: Category[]): Promise<void> {
+  try {
+    localStorage.setItem('amar_store_live_categories', JSON.stringify(categories));
+  } catch (err) {
+    console.error("Error saving categories to localStorage", err);
+  }
+
+  try {
+    for (const cat of categories) {
+      const catId = (cat.name || 'category').toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const catRef = doc(db, 'categories', catId);
+      await setDoc(catRef, {
+        name: cat.name,
+        priority: cat.priority || 1,
+        products: cat.products || [],
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  } catch (err) {
+    console.warn("Firestore categories sync error:", err);
   }
 }
 
@@ -651,13 +722,21 @@ const REVIEWS_KEY = 'amar_store_user_reviews';
 
 export async function fetchLiveReviews(): Promise<Review[]> {
   try {
+    const cached = localStorage.getItem(REVIEWS_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+
+  try {
     const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/reviews`);
     if (!res.ok) {
-      return getStoredReviews();
+      return DEFAULT_REVIEWS;
     }
     const data = await res.json();
     const docs = data.documents || [];
-    if (docs.length === 0) return getStoredReviews();
+    if (docs.length === 0) return DEFAULT_REVIEWS;
 
     const remoteReviews: Review[] = docs.map((doc: any) => {
       const f = doc.fields || {};
@@ -687,16 +766,15 @@ export async function fetchLiveReviews(): Promise<Review[]> {
       };
     }).filter((r: Review) => r.comment);
 
-    return remoteReviews.length > 0 ? remoteReviews : DEFAULT_REVIEWS;
+    if (remoteReviews.length > 0) {
+      localStorage.setItem(REVIEWS_KEY, JSON.stringify(remoteReviews));
+      return remoteReviews;
+    }
+    return DEFAULT_REVIEWS;
   } catch (err) {
-    console.warn("Failed to fetch live reviews from Firestore, using fallback", err);
-    return getStoredReviews();
+    console.warn("Failed to fetch live reviews from Firestore", err);
+    return DEFAULT_REVIEWS;
   }
-}
-
-function getStoredReviews(): Review[] {
-  const local = getLocalAddedReviews().filter(r => r.status === 'Approved' || r.status === 'approved');
-  return local.length > 0 ? [...local, ...DEFAULT_REVIEWS] : DEFAULT_REVIEWS;
 }
 
 export function getLocalAddedReviews(): Review[] {
@@ -713,8 +791,26 @@ export function saveUserReview(review: Review): void {
     const current = getLocalAddedReviews();
     const updated = [review, ...current];
     localStorage.setItem(REVIEWS_KEY, JSON.stringify(updated));
+    const revRef = doc(db, 'reviews', review.id || ('rev_' + Date.now()));
+    setDoc(revRef, {
+      userName: review.userName,
+      userPhoto: review.userPhoto || '',
+      productName: review.productName || 'Amar Store',
+      rating: review.rating || 5,
+      comment: review.comment || '',
+      status: review.status || 'Approved',
+      timestamp: new Date().toISOString()
+    }).catch(() => {});
   } catch (err) {
     console.error("Error saving review", err);
+  }
+}
+
+export function saveAllReviews(reviews: Review[]): void {
+  try {
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+  } catch (err) {
+    console.error("Error saving reviews", err);
   }
 }
 
