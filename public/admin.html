@@ -147,7 +147,7 @@
         
         <!-- ADD / EDIT PRODUCT FORM -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl h-fit">
-          <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+          <h2 id="productFormTitle" class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
             <i class="fa-solid fa-plus-circle"></i> নতুন প্রোডাক্ট যোগ করুন
           </h2>
 
@@ -226,7 +226,7 @@
             </div>
 
             <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 cursor-pointer">
-              <i class="fa-solid fa-save mr-1"></i> প্রোডাক্ট সেভ করুন
+              <i class="fa-solid fa-save mr-1"></i> <span id="saveProductBtnText">প্রোডাক্ট সেভ করুন</span>
             </button>
           </form>
         </div>
@@ -574,6 +574,7 @@
 
     let globalCategories = [];
     let globalSettings = {};
+    let editingProduct = null;
 
     // FIREBASE AUTHENTICATION
     async function checkAdminPassword() {
@@ -827,6 +828,16 @@
             </div>
 
             <div class="flex items-center gap-2">
+              <!-- UP / DOWN ARROWS FOR CATEGORY ORDER -->
+              <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1">
+                <button onclick="moveCategory(${idx}, 'up')" class="text-slate-400 hover:text-amber-400 w-7 h-7 flex items-center justify-center rounded-md hover:bg-slate-800 cursor-pointer" title="উপরে সরান">
+                  <i class="fa-solid fa-arrow-up text-xs"></i>
+                </button>
+                <button onclick="moveCategory(${idx}, 'down')" class="text-slate-400 hover:text-amber-400 w-7 h-7 flex items-center justify-center rounded-md hover:bg-slate-800 cursor-pointer" title="নিচে সরান">
+                  <i class="fa-solid fa-arrow-down text-xs"></i>
+                </button>
+              </div>
+
               <button onclick="editCategoryName(${idx})" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer">
                 <i class="fa-solid fa-pen-to-square mr-1"></i> নাম পরিবর্তন
               </button>
@@ -1141,8 +1152,21 @@
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <!-- UP / DOWN ARROWS FOR PRODUCT ORDER -->
+                  <div class="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+                    <button onclick="moveProduct(${cIdx}, ${pIdx}, 'up')" class="text-slate-400 hover:text-amber-400 w-7 h-7 flex items-center justify-center rounded hover:bg-slate-800 cursor-pointer" title="উপরে সরান">
+                      <i class="fa-solid fa-arrow-up text-[10px]"></i>
+                    </button>
+                    <button onclick="moveProduct(${cIdx}, ${pIdx}, 'down')" class="text-slate-400 hover:text-amber-400 w-7 h-7 flex items-center justify-center rounded hover:bg-slate-800 cursor-pointer" title="নিচে সরান">
+                      <i class="fa-solid fa-arrow-down text-[10px]"></i>
+                    </button>
+                  </div>
+
                   <button onclick="toggleProductStock(${cIdx}, ${pIdx})" class="px-2.5 py-1 rounded text-xs font-semibold ${prod.status === 'out' ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'} cursor-pointer">
                     ${prod.status === 'out' ? 'Out of Stock' : 'In Stock'}
+                  </button>
+                  <button onclick="editProduct(${cIdx}, ${pIdx})" class="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 p-2 rounded-lg text-xs cursor-pointer" title="প্রোডাক্ট এডিট করুন">
+                    <i class="fa-solid fa-pencil"></i>
                   </button>
                   <button onclick="deleteProduct(${cIdx}, ${pIdx})" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 p-2 rounded-lg text-xs cursor-pointer">
                     <i class="fa-solid fa-trash"></i>
@@ -1197,14 +1221,14 @@
       }
 
       const newProd = {
-        id: 'prod_' + Date.now(),
+        id: editingProduct ? editingProduct.id : ('prod_' + Date.now()),
         name: title,
         title: title,
         subcategory: subcat,
         image: image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500',
         regularPrice: regularPrice,
         offerPrice: offerPrice,
-        price: parsedPackages[0].price || offerPrice,
+        price: (parsedPackages.length > 0 && parsedPackages[0].price) ? parsedPackages[0].price : offerPrice,
         duration: duration || '৩০ দিন',
         status: status,
         description: description,
@@ -1215,22 +1239,142 @@
         features: subcat ? [subcat, duration || 'Instant Delivery'] : ['Instant Delivery']
       };
 
-      let catIdx = globalCategories.findIndex(c => c.name === catName);
-      if (catIdx === -1) {
-        globalCategories.push({
-          name: catName,
-          priority: globalCategories.length + 1,
-          products: [newProd]
-        });
+      if (editingProduct) {
+        const { cIdx, pIdx } = editingProduct;
+        const currentCat = globalCategories[cIdx];
+        
+        // If category remains same
+        if (currentCat.name === catName) {
+          currentCat.products[pIdx] = newProd;
+        } else {
+          // Category changed: delete from old category list and add to new category list
+          currentCat.products.splice(pIdx, 1);
+          let targetCatIdx = globalCategories.findIndex(c => c.name === catName);
+          if (targetCatIdx === -1) {
+            globalCategories.push({
+              name: catName,
+              priority: globalCategories.length + 1,
+              products: [newProd]
+            });
+          } else {
+            if (!globalCategories[targetCatIdx].products) globalCategories[targetCatIdx].products = [];
+            globalCategories[targetCatIdx].products.unshift(newProd);
+          }
+        }
+        resetProductForm();
+        showToast('প্রোডাক্ট সফলভাবে আপডেট করা হয়েছে!');
       } else {
-        if (!globalCategories[catIdx].products) globalCategories[catIdx].products = [];
-        globalCategories[catIdx].products.unshift(newProd);
+        let catIdx = globalCategories.findIndex(c => c.name === catName);
+        if (catIdx === -1) {
+          globalCategories.push({
+            name: catName,
+            priority: globalCategories.length + 1,
+            products: [newProd]
+          });
+        } else {
+          if (!globalCategories[catIdx].products) globalCategories[catIdx].products = [];
+          globalCategories[catIdx].products.unshift(newProd);
+        }
+        document.getElementById('productForm').reset();
+        showToast('প্রোডাক্ট সফলভাবে সংরক্ষণ করা হয়েছে!');
       }
 
       await syncCategoriesToFirestore();
-      document.getElementById('productForm').reset();
-      showToast('প্রোডাক্ট সফলভাবে সংরক্ষণ করা হয়েছে!');
       renderProductList(globalCategories);
+    }
+
+    function editProduct(cIdx, pIdx) {
+      if (!globalCategories[cIdx] || !globalCategories[cIdx].products[pIdx]) return;
+      const prod = globalCategories[cIdx].products[pIdx];
+      editingProduct = { cIdx, pIdx, id: prod.id };
+
+      document.getElementById('productFormTitle').innerHTML = '<i class="fa-solid fa-pencil text-amber-400 mr-1"></i> প্রোডাক্ট এডিট করুন';
+      document.getElementById('saveProductBtnText').innerText = 'প্রোডাক্ট আপডেট করুন';
+
+      if (!document.getElementById('cancelEditBtn')) {
+        const formEl = document.getElementById('productForm');
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.id = 'cancelEditBtn';
+        cancelBtn.className = 'w-full mt-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl transition cursor-pointer';
+        cancelBtn.innerHTML = 'এডিট বাতিল করুন';
+        cancelBtn.onclick = resetProductForm;
+        formEl.appendChild(cancelBtn);
+      }
+
+      document.getElementById('prodCategory').value = globalCategories[cIdx].name;
+      document.getElementById('prodSubcat').value = prod.subcategory || '';
+      document.getElementById('prodTitle').value = prod.name || prod.title || '';
+      document.getElementById('prodImage').value = prod.image || '';
+      document.getElementById('prodRegularPrice').value = prod.regularPrice || '';
+      document.getElementById('prodOfferPrice').value = prod.offerPrice || '';
+      document.getElementById('prodDuration').value = prod.duration || '৩০ দিন';
+      document.getElementById('prodInputLabel').value = prod.inputLabel || 'Player ID / UID';
+      document.getElementById('prodStock').value = prod.status === 'out' ? 'out' : 'in';
+      document.getElementById('prodDesc').value = prod.description || '';
+
+      if (prod.packages && Array.isArray(prod.packages)) {
+        document.getElementById('prodPackagesInput').value = prod.packages.map(p => `${p.name}:${p.price}`).join(', ');
+      } else {
+        document.getElementById('prodPackagesInput').value = '';
+      }
+
+      document.getElementById('productForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resetProductForm() {
+      editingProduct = null;
+      document.getElementById('productForm').reset();
+      document.getElementById('productFormTitle').innerHTML = '<i class="fa-solid fa-plus-circle"></i> নতুন প্রোডাক্ট যোগ করুন';
+      document.getElementById('saveProductBtnText').innerText = 'প্রোডাক্ট সেভ করুন';
+      
+      const cancelBtn = document.getElementById('cancelEditBtn');
+      if (cancelBtn) {
+        cancelBtn.remove();
+      }
+    }
+
+    async function moveProduct(cIdx, pIdx, direction) {
+      const products = globalCategories[cIdx].products;
+      if (!products) return;
+      if (direction === 'up' && pIdx > 0) {
+        const temp = products[pIdx];
+        products[pIdx] = products[pIdx - 1];
+        products[pIdx - 1] = temp;
+      } else if (direction === 'down' && pIdx < products.length - 1) {
+        const temp = products[pIdx];
+        products[pIdx] = products[pIdx + 1];
+        products[pIdx + 1] = temp;
+      } else {
+        return;
+      }
+      await syncCategoriesToFirestore();
+      renderProductList(globalCategories);
+      showToast('প্রোডাক্টের অবস্থান পরিবর্তন করা হয়েছে!');
+    }
+
+    async function moveCategory(idx, direction) {
+      if (direction === 'up' && idx > 0) {
+        const temp = globalCategories[idx];
+        globalCategories[idx] = globalCategories[idx - 1];
+        globalCategories[idx - 1] = temp;
+      } else if (direction === 'down' && idx < globalCategories.length - 1) {
+        const temp = globalCategories[idx];
+        globalCategories[idx] = globalCategories[idx + 1];
+        globalCategories[idx + 1] = temp;
+      } else {
+        return;
+      }
+      
+      globalCategories.forEach((cat, index) => {
+        cat.priority = index + 1;
+      });
+
+      await syncCategoriesToFirestore();
+      renderCategoryList(globalCategories);
+      renderProductList(globalCategories);
+      populateCategoryDropdown(globalCategories);
+      showToast('ক্যাটাগরির অবস্থান পরিবর্তন করা হয়েছে!');
     }
 
     async function toggleProductStock(cIdx, pIdx) {
