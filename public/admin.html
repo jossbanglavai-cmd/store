@@ -1812,6 +1812,21 @@
         document.getElementById('settingStoreIconUrl').value = s.storeIconUrl || '';
       }
 
+      // Dynamic favicon update in admin panel browser tab too
+      const favUrl = s.faviconUrl || s.favicon || '/favicon.png';
+      if (favUrl) {
+        const links = document.querySelectorAll("link[rel*='icon']");
+        if (links.length > 0) {
+          links.forEach(link => { link.href = favUrl; });
+        } else {
+          const newLink = document.createElement('link');
+          newLink.rel = 'icon';
+          newLink.type = 'image/png';
+          newLink.href = favUrl;
+          document.head.appendChild(newLink);
+        }
+      }
+
       // Payments Gateways
       if (s.payments) {
         document.getElementById('bkashNum').value = s.payments.bkash || '';

@@ -6,6 +6,8 @@ export const FALLBACK_SETTINGS: AppSettings = {
   operatingHours: "সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)",
   deliverySpeedText: "স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)",
   whatsappPhone: "01770931981",
+  faviconUrl: "",
+  storeIconUrl: "",
   sliderData: [],
   payments: {
     bkash: "01770931981",

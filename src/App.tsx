@@ -54,9 +54,11 @@ export default function App() {
   useEffect(() => {
     const favUrl = settings.faviconUrl || settings.favicon;
     if (favUrl) {
-      const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-      if (link) {
-        link.href = favUrl;
+      const links = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+      if (links.length > 0) {
+        links.forEach(link => {
+          link.href = favUrl;
+        });
       } else {
         const newLink = document.createElement('link');
         newLink.rel = 'icon';
