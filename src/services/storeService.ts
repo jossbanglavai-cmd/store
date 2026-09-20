@@ -761,7 +761,8 @@ export function parseFirestoreOrder(docId: string, data: any): Order {
     status,
     method: data.paymentMethod || data.method || 'Manual',
     trx: data.trxId || data.trx || '',
-    senderPhone: data.senderPhone || '',
+    senderPhone: data.senderPhone || data.sender || data.senderNumber || data.phone || '',
+    userEmail: data.userEmail || data.email || '',
     timeString: new Date(timeNum).toLocaleString('bn-BD'),
     timestamp: timeNum
   };

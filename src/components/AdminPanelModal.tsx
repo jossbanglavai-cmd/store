@@ -274,8 +274,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       }
 
       const orderData = orderSnap.data();
-      const userEmail = orderData.userEmail || '';
-      const amount = Number(orderData.amount || 0);
+      const userEmail = (orderData.userEmail || orderData.email || '').trim().toLowerCase();
+      const amount = Number(orderData.amount || orderData.price || 0);
       const productName = orderData.productName || '';
 
       const isDeposit = orderId.startsWith('DEP-') || productName.toLowerCase().includes('wallet deposit');
@@ -296,14 +296,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             currentBalance = Number(userSnap.data().balance || 0);
           }
           const newBalance = currentBalance + amount;
-          await setDoc(userRef, { balance: newBalance }, { merge: true });
+          await setDoc(userRef, { balance: newBalance, updatedAt: new Date().toISOString() }, { merge: true });
           setSuccessMsg(`গ্রাহক (${userEmail}) এর ওয়ালেটে সফলভাবে ৳${amount} যোগ করা হয়েছে!`);
           setTimeout(() => setSuccessMsg(''), 4500);
         }
       } else {
         // Standard digital product order refund logic
-        const paymentMethod = orderData.paymentMethod || '';
-        if (newStatus === 'Cancel' && paymentMethod === 'Wallet Pay' && userEmail) {
+        const paymentMethod = (orderData.paymentMethod || orderData.method || '').trim().toLowerCase();
+        if (newStatus === 'Cancel' && (paymentMethod === 'wallet pay' || paymentMethod === 'walletpay') && userEmail) {
           const isAlreadyRefunded = orderData.refunded === true;
           if (!isAlreadyRefunded) {
             const userRef = doc(db, 'users', userEmail);
@@ -1073,7 +1073,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-1.5 gap-x-4 text-[11px] text-gray-600 dark:text-gray-300">
                                 <div>
-                                  <span className="text-gray-400">গ্রাহক মেইল:</span> <span className="font-semibold text-gray-800 dark:text-gray-200 select-all font-mono">{ord.playerInfo.includes('@') ? ord.playerInfo : (ord.senderPhone ? `${ord.id} user` : 'Customer')}</span>
+                                  <span className="text-gray-400">গ্রাহক মেইল:</span> <span className="font-semibold text-gray-800 dark:text-gray-200 select-all font-mono">{ord.userEmail || (ord.playerInfo.includes('@') ? ord.playerInfo : 'Customer')}</span>
                                 </div>
                                 <div>
                                   <span className="text-gray-400">মূল্য:</span> <span className="font-extrabold text-emerald-600 dark:text-emerald-400">৳{ord.price}</span>

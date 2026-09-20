@@ -61,6 +61,7 @@ export interface Order {
   method: string;
   trx?: string;
   senderPhone?: string;
+  userEmail?: string;
   timeString: string;
   timestamp?: number;
 }
