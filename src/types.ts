@@ -17,6 +17,7 @@ export interface Product {
   offerPrice?: number;
   duration?: string;
   subCategory?: string;
+  priority?: number;
 }
 
 export interface Category {

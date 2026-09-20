@@ -90,6 +90,33 @@ export default function App() {
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
 
+  const [isAdminPage, setIsAdminPage] = useState(() => {
+    return (
+      window.location.pathname.includes('/admin') ||
+      window.location.pathname.endsWith('admin.html') ||
+      window.location.hash.includes('#admin') ||
+      window.location.hash.includes('admin')
+    );
+  });
+
+  useEffect(() => {
+    const checkPath = () => {
+      const isA = (
+        window.location.pathname.includes('/admin') ||
+        window.location.pathname.endsWith('admin.html') ||
+        window.location.hash.includes('#admin') ||
+        window.location.hash.includes('admin')
+      );
+      setIsAdminPage(isA);
+    };
+    window.addEventListener('hashchange', checkPath);
+    window.addEventListener('popstate', checkPath);
+    return () => {
+      window.removeEventListener('hashchange', checkPath);
+      window.removeEventListener('popstate', checkPath);
+    };
+  }, []);
+
   // Security: Prevent right-click and common inspection shortcuts
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -310,6 +337,22 @@ export default function App() {
     return cat.products.length > 0;
   });
 
+  if (isAdminPage) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0f111a] text-gray-900 dark:text-gray-100 font-sans">
+        <AdminPanelModal
+          isOpen={true}
+          onClose={() => {}}
+          categories={categories}
+          onUpdateCategories={setCategories}
+          settings={settings}
+          onUpdateSettings={setSettings}
+          standalone={true}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f4f6f9] dark:bg-[#0b0d12] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-200">
       
@@ -333,7 +376,6 @@ export default function App() {
           isDark={isDark}
           onToggleTheme={toggleTheme}
           onSetTheme={setThemeExplicitly}
-          onOpenAdmin={() => setIsAdminOpen(true)}
         />
 
         {/* Toast Notification */}

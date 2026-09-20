@@ -18,7 +18,6 @@ interface Props {
   isDark?: boolean;
   onToggleTheme?: () => void;
   onSetTheme?: (dark: boolean) => void;
-  onOpenAdmin?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -37,7 +36,6 @@ export const Navbar: React.FC<Props> = ({
   isDark = false,
   onToggleTheme,
   onSetTheme,
-  onOpenAdmin,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#13151b]/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-xs transition-colors duration-200">

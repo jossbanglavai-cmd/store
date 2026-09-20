@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, ShieldCheck, Lock, LogOut, Package, ShoppingBag, Plus, Trash2, Edit3, Check, AlertCircle, RefreshCw, CheckCircle, XCircle 
+  X, ShieldCheck, Lock, LogOut, Package, ShoppingBag, Plus, Trash2, Edit3, Check, AlertCircle, RefreshCw, CheckCircle, XCircle, ChevronUp, ChevronDown 
 } from 'lucide-react';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -14,6 +14,7 @@ interface AdminPanelModalProps {
   onUpdateCategories: (categories: Category[]) => void;
   settings: AppSettings;
   onUpdateSettings: (settings: AppSettings) => void;
+  standalone?: boolean;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -23,6 +24,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onUpdateCategories,
   settings,
   onUpdateSettings,
+  standalone = false,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('amar_store_admin_auth') === 'true';
@@ -58,14 +60,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     subCategory: '',
     regularPrice: 0,
     offerPrice: 0,
-    duration: '৩০ দিন'
+    duration: '৩০ দিন',
+    priority: 1
   });
+  const [packagesString, setPackagesString] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // Fetch orders from Firestore in real time
   useEffect(() => {
-    if (isOpen && isAuthenticated) {
+    if ((isOpen || standalone) && isAuthenticated) {
       const ordersCol = collection(db, 'orders');
       const unsubscribe = onSnapshot(ordersCol, (snapshot) => {
         const ordersList: Order[] = [];
@@ -80,9 +84,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       });
       return () => unsubscribe();
     }
-  }, [isOpen, isAuthenticated]);
+  }, [isOpen, standalone, isAuthenticated]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !standalone) return null;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,9 +191,18 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
     const updatedCategories = [...categories];
 
-    // Ensure packages are present, or fall back to default based on offer price
-    let pkgs = [...productForm.packages];
-    if (pkgs.length === 0 || (pkgs.length === 1 && pkgs[0].name === 'Standard' && pkgs[0].price === 100)) {
+    // Parse packagesString to a Package[]
+    let pkgs: { name: string; price: number }[] = [];
+    if (packagesString.trim()) {
+      pkgs = packagesString.split(',').map(item => {
+        const parts = item.split(':');
+        const name = parts[0] ? parts[0].trim() : '';
+        const price = parts[1] ? Number(parts[1].trim()) : 0;
+        return { name, price };
+      }).filter(p => p.name && !isNaN(p.price));
+    }
+
+    if (pkgs.length === 0) {
       if (productForm.offerPrice && productForm.offerPrice > 0) {
         pkgs = [{
           name: productForm.duration || 'Standard',
@@ -203,6 +216,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       packages: pkgs,
       regularPrice: productForm.regularPrice ? Number(productForm.regularPrice) : undefined,
       offerPrice: productForm.offerPrice ? Number(productForm.offerPrice) : undefined,
+      priority: productForm.priority !== undefined ? Number(productForm.priority) : 1
     };
 
     if (isAddingNew || editingProductIndex === null || originalCategoryIndex === null || originalProductIndex === null) {
@@ -231,6 +245,28 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       }
     }
 
+    // Sort products inside target category by priority
+    const targetCat = updatedCategories[editingCategoryIndex];
+    if (targetCat && targetCat.products) {
+      targetCat.products.sort((a, b) => {
+        const pA = a.priority !== undefined ? Number(a.priority) : 99;
+        const pB = b.priority !== undefined ? Number(b.priority) : 99;
+        return pA - pB;
+      });
+    }
+
+    // Sort original category as well (if category was changed)
+    if (originalCategoryIndex !== null && originalCategoryIndex !== editingCategoryIndex) {
+      const origCat = updatedCategories[originalCategoryIndex];
+      if (origCat && origCat.products) {
+        origCat.products.sort((a, b) => {
+          const pA = a.priority !== undefined ? Number(a.priority) : 99;
+          const pB = b.priority !== undefined ? Number(b.priority) : 99;
+          return pA - pB;
+        });
+      }
+    }
+
     onUpdateCategories(updatedCategories);
     saveLiveCategories(updatedCategories);
     
@@ -240,6 +276,50 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditingProductIndex(null);
     setOriginalCategoryIndex(null);
     setOriginalProductIndex(null);
+  };
+
+  const handleMoveCategory = (idx: number, direction: 'up' | 'down') => {
+    const updatedCategories = [...categories];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= updatedCategories.length) return;
+    
+    // Swap positions
+    const temp = updatedCategories[idx];
+    updatedCategories[idx] = updatedCategories[targetIdx];
+    updatedCategories[targetIdx] = temp;
+
+    // Reset priorities to match the new indices
+    updatedCategories.forEach((cat, index) => {
+      cat.priority = index + 1;
+    });
+
+    onUpdateCategories(updatedCategories);
+    saveLiveCategories(updatedCategories);
+    setSuccessMsg('ক্যাটেগরি ক্রম সফলভাবে পরিবর্তন করা হয়েছে!');
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleMoveProduct = (catIdx: number, idx: number, direction: 'up' | 'down') => {
+    const updatedCategories = [...categories];
+    const cat = updatedCategories[catIdx];
+    if (!cat) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= cat.products.length) return;
+
+    // Swap positions
+    const temp = cat.products[idx];
+    cat.products[idx] = cat.products[targetIdx];
+    cat.products[targetIdx] = temp;
+
+    // Reset product priorities
+    cat.products.forEach((prod, index) => {
+      prod.priority = index + 1;
+    });
+
+    onUpdateCategories(updatedCategories);
+    saveLiveCategories(updatedCategories);
+    setSuccessMsg('প্রোডাক্ট ক্রম সফলভাবে পরিবর্তন করা হয়েছে!');
+    setTimeout(() => setSuccessMsg(''), 3000);
   };
 
   const handleDeleteProduct = (catIdx: number, prodIdx: number) => {
@@ -394,8 +474,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#16181f] w-full max-w-5xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className={standalone 
+      ? "w-full min-h-screen bg-gray-50 dark:bg-[#0f111a] flex justify-center p-2 sm:p-4 md:p-6"
+      : "fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+    }>
+      <div className={`bg-white dark:bg-[#16181f] w-full max-w-6xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col ${
+        standalone ? "min-h-[90vh]" : "max-h-[92vh]"
+      }`}>
         
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1f222e]">
@@ -408,12 +493,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               <p className="text-[11px] text-gray-500 dark:text-gray-400">ক্যাটেগরি, প্রোডাক্ট এবং অর্ডার কন্ট্রোল সেন্টার</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {standalone ? (
+            <button
+              onClick={() => {
+                window.location.hash = '';
+                window.location.pathname = '/';
+              }}
+              className="px-3 py-1.5 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              title="ইউজার হোম পেজে ফিরে যান"
+            >
+              <span>ইউজার হোম পেজ</span>
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
@@ -537,12 +635,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             status: 'in',
                             description: '',
                             inputLabel: 'Player ID / Account Email',
-                            packages: [{ name: '১ মাস', price: 100 }],
+                            packages: [],
                             subCategory: '',
                             regularPrice: 0,
                             offerPrice: 0,
-                            duration: '৩০ দিন'
+                            duration: '৩০ দিন',
+                            priority: 1
                           });
+                          setPackagesString('');
                         }}
                         className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition cursor-pointer"
                       >
@@ -790,6 +890,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             <option value="out">স্টক শেষ (আউট অব স্টক)</option>
                           </select>
                         </div>
+
+                        {/* 10. Serial / Priority Order */}
+                        <div>
+                          <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1 block">
+                            সিরিয়াল / প্রায়োরিটি (Priority Order)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="যেমন: 1, 2, 3"
+                            value={productForm.priority !== undefined ? productForm.priority : ''}
+                            onChange={e => setProductForm({ ...productForm, priority: Number(e.target.value) })}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white font-mono font-bold"
+                          />
+                          <span className="text-[10px] text-gray-400 mt-1 block">১ দিলে সবার প্রথমে থাকবে, ২ দিলে দ্বিতীয় অবস্থানে।</span>
+                        </div>
                       </div>
 
                       {/* Brief description */}
@@ -804,65 +919,23 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         />
                       </div>
 
-                      {/* Multi Packages option */}
-                      <div className="bg-[#fcfdfd] dark:bg-[#1f222d] p-3.5 rounded-xl border border-gray-200 dark:border-gray-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block">প্যাকেজ এবং প্রাইস তালিকা (ঐচ্ছিক)</label>
-                            <span className="text-[10px] text-gray-400 block">ফাকা রাখলে মূল অফার প্রাইস ও মেয়াদ দিয়ে একটি ডিফল্ট প্যাকেজ তৈরি হবে।</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProductForm({
-                                ...productForm,
-                                packages: [...productForm.packages, { name: 'নতুন প্যাকেজ', price: productForm.offerPrice || 100 }]
-                              });
-                            }}
-                            className="text-blue-600 text-xs hover:underline flex items-center gap-1 font-bold cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5" /> প্যাকেজ যোগ করুন
-                          </button>
+                      {/* Comma-separated Packages Textarea Option */}
+                      <div className="bg-[#fcfdfd] dark:bg-[#1f222d] p-4 rounded-xl border border-gray-200 dark:border-gray-800 space-y-2">
+                        <div>
+                          <label className="text-xs font-bold text-gray-800 dark:text-gray-200 block">
+                            প্যাকেজ এবং প্রাইস তালিকা (ঐচ্ছিক) <span className="text-blue-500 font-semibold">কমা দিয়ে আলাদা করুন</span>
+                          </label>
+                          <span className="text-[10px] text-gray-400 block mt-0.5">
+                            বিন্যাস: প্যাকেজ নাম:মূল্য, প্যাকেজ নাম:মূল্য (যেমন: <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-blue-600 dark:text-blue-400">1 Screen:160, 2 Screen:300, Full Account:1200</code>)। ফাকা রাখলে মূল অফার প্রাইস ও মেয়াদ দিয়ে একটি ডিফল্ট প্যাকেজ তৈরি হবে।
+                          </span>
                         </div>
-
-                        <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                          {productForm.packages.map((pkg, pIdx) => (
-                            <div key={pIdx} className="flex items-center gap-2 bg-white dark:bg-gray-800 p-1.5 rounded-lg border border-gray-150 dark:border-gray-700">
-                              <input
-                                type="text"
-                                placeholder="যেমন: 1 Screen / Premium Pack"
-                                value={pkg.name}
-                                onChange={e => {
-                                  const pkgs = [...productForm.packages];
-                                  pkgs[pIdx].name = e.target.value;
-                                  setProductForm({ ...productForm, packages: pkgs });
-                                }}
-                                className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-850 rounded-md text-xs text-gray-900 dark:text-white outline-hidden"
-                              />
-                              <input
-                                type="number"
-                                placeholder="দাম"
-                                value={pkg.price}
-                                onChange={e => {
-                                  const pkgs = [...productForm.packages];
-                                  pkgs[pIdx].price = Number(e.target.value);
-                                  setProductForm({ ...productForm, packages: pkgs });
-                                }}
-                                className="w-24 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-850 rounded-md text-xs text-gray-900 dark:text-white font-mono font-bold"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const pkgs = productForm.packages.filter((_, i) => i !== pIdx);
-                                  setProductForm({ ...productForm, packages: pkgs });
-                                }}
-                                className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg cursor-pointer"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="যেমন: 1 Screen:160, 2 Screen:300, Full Account:1200"
+                          value={packagesString}
+                          onChange={e => setPackagesString(e.target.value)}
+                          className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:outline-hidden font-mono"
+                        />
                       </div>
 
                       {/* Product form action buttons */}
@@ -905,6 +978,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           </div>
                           
                           <div className="flex items-center gap-1.5">
+                            {/* Movement Buttons */}
+                            <div className="flex items-center bg-gray-100 dark:bg-[#151821] rounded-lg p-0.5 border border-gray-200/40 dark:border-gray-800/60">
+                              <button
+                                onClick={() => handleMoveCategory(catIdx, 'up')}
+                                disabled={catIdx === 0}
+                                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-20 transition rounded-md"
+                                title="উপরে সরান"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleMoveCategory(catIdx, 'down')}
+                                disabled={catIdx === categories.length - 1}
+                                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-20 transition rounded-md"
+                                title="নিচে সরান"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            
                             <button
                               onClick={() => {
                                 setEditingCategoryData({ index: catIdx, name: cat.name, priority: cat.priority || catIdx + 1 });
@@ -923,7 +1016,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                            <span className="text-[10px] bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2.5 py-0.5 rounded-full font-bold">
+                            <span className="text-[10px] bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2.5 py-1.5 rounded-full font-bold">
                               {cat.products.length} প্রোডাক্ট
                             </span>
                           </div>
@@ -959,7 +1052,27 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-1">
+                                 <div className="flex items-center gap-1">
+                                  {/* Product Movement Buttons */}
+                                  <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/40 dark:border-gray-700/60">
+                                    <button
+                                      onClick={() => handleMoveProduct(catIdx, prodIdx, 'up')}
+                                      disabled={prodIdx === 0}
+                                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 disabled:opacity-25 transition rounded"
+                                      title="উপরে সরান"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleMoveProduct(catIdx, prodIdx, 'down')}
+                                      disabled={prodIdx === cat.products.length - 1}
+                                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 disabled:opacity-25 transition rounded"
+                                      title="নিচে সরান"
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+
                                   <button
                                     onClick={() => handleToggleStock(catIdx, prodIdx)}
                                     title="স্টক ইন / আউট পরিবর্তন করুন"
@@ -978,6 +1091,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                                       setEditingProductIndex(prodIdx);
                                       setOriginalProductIndex(prodIdx);
                                       setProductForm({ ...prod });
+                                      const pkgsString = prod.packages ? prod.packages.map(p => `${p.name}:${p.price}`).join(', ') : '';
+                                      setPackagesString(pkgsString);
                                       setIsAddingNew(false);
                                     }}
                                     className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition"
