@@ -1813,7 +1813,10 @@
       }
 
       // Dynamic favicon update in admin panel browser tab too
-      const favUrl = s.faviconUrl || s.favicon || '/favicon.png';
+      let favUrl = s.faviconUrl || s.favicon || s.storeIconUrl || s.headerLogo || 'https://i.postimg.cc/prFhjX3v/20260514-210650.png';
+      if (!favUrl || favUrl === '/favicon.png' || favUrl === 'favicon.png') {
+        favUrl = 'https://i.postimg.cc/prFhjX3v/20260514-210650.png';
+      }
       if (favUrl) {
         const links = document.querySelectorAll("link[rel*='icon']");
         if (links.length > 0) {

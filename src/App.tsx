@@ -52,7 +52,10 @@ export default function App() {
 
   // Sync favicon with settings
   useEffect(() => {
-    const favUrl = settings.faviconUrl || settings.favicon;
+    let favUrl = settings.faviconUrl || settings.favicon || settings.storeIconUrl || settings.headerLogo;
+    if (!favUrl || favUrl === '/favicon.png' || favUrl === 'favicon.png') {
+      favUrl = 'https://i.postimg.cc/prFhjX3v/20260514-210650.png';
+    }
     if (favUrl) {
       const links = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
       if (links.length > 0) {
@@ -67,7 +70,7 @@ export default function App() {
         document.head.appendChild(newLink);
       }
     }
-  }, [settings.favicon, settings.faviconUrl]);
+  }, [settings.favicon, settings.faviconUrl, settings.storeIconUrl, settings.headerLogo]);
 
   const [categories, setCategories] = useState<Category[]>(() => {
     try {
