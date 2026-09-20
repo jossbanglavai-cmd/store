@@ -624,28 +624,61 @@ export const ReviewsView: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* Product select */}
+                {/* Product select - Chatbot Box Style */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase mb-2">
                     কোন পণ্যের রিভিউ (Product)
                   </label>
-                  <select
-                    value={productName}
-                    onChange={(e) => {
-                      setProductName(e.target.value);
-                      setDuplicateError(null);
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 focus:border-black dark:focus:border-white outline-hidden text-sm bg-white dark:bg-[#16181f] text-gray-900 dark:text-white"
-                  >
-                    {productNames.map((name, i) => {
-                      const isAlready = userReviewedProducts.has(name.trim().toLowerCase());
-                      return (
-                        <option key={i} value={name} disabled={isAlready}>
-                          {name} {isAlready ? '(ইতিমধ্যে রিভিউ দেওয়া হয়েছে)' : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  
+                  {/* Chatbot style box */}
+                  <div className="bg-gray-50 dark:bg-gray-950 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 space-y-2 max-h-[160px] overflow-y-auto scrollbar-thin">
+                    <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" />
+                      <span>রিভিউ দিতে নিচের যেকোনো একটি প্রোডাক্ট সিলেক্ট করুন:</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {productNames.map((name, i) => {
+                        const isAlready = userReviewedProducts.has(name.trim().toLowerCase());
+                        const isSelected = productName === name;
+                        
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              if (!isAlready) {
+                                setProductName(name);
+                                setDuplicateError(null);
+                              }
+                            }}
+                            className={`relative px-3 py-2 rounded-xl border text-xs font-medium transition flex items-center justify-between ${
+                              isAlready
+                                ? 'bg-gray-100/50 dark:bg-gray-900/30 border-gray-200/50 dark:border-gray-800/40 text-gray-400 dark:text-gray-600 opacity-60 cursor-not-allowed'
+                                : isSelected
+                                  ? 'bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 cursor-pointer shadow-xs font-bold'
+                                  : 'bg-white dark:bg-[#16181f] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              {isAlready && (
+                                <span className="text-red-500 text-[13px] font-bold" title="ইতিমধ্যে রিভিউ দিয়েছেন">🚫</span>
+                              )}
+                              <span className="truncate">{name}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {isAlready ? (
+                                <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-md font-bold">রিভিউড</span>
+                              ) : isSelected ? (
+                                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[9px] scale-110">✓</span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
                   {isCurrentProductReviewed && (
                     <p className="text-[11px] text-red-600 dark:text-red-400 font-medium mt-1">
                       * আপনি ইতিমধ্যে এই পণ্যে রিভিউ দিয়েছেন। অন্য পণ্য নির্বাচন করুন।
