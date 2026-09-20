@@ -181,14 +181,10 @@
               <p class="text-[10px] text-slate-500 mt-0.5">টুলস দিয়ে ইমেজ আপলোড করলে লিঙ্ক স্বয়ংক্রিয়ভাবে বসে যাবে।</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3">
               <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">রেগুলার প্রাইস (৳)</label>
-                <input type="number" id="prodRegularPrice" placeholder="400" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">অফার প্রাইস / বেস প্রাইস (৳) *</label>
-                <input type="number" id="prodOfferPrice" required placeholder="250" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+                <label class="block text-xs font-medium text-slate-400 mb-1">প্রোডাক্টের প্রাইস / মূল্য (৳) *</label>
+                <input type="number" id="prodOfferPrice" required placeholder="যেমন: ২৫০" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
               </div>
             </div>
 
@@ -1189,7 +1185,8 @@
       const subcat = document.getElementById('prodSubcat').value.trim();
       const title = document.getElementById('prodTitle').value.trim();
       const image = document.getElementById('prodImage').value.trim();
-      const regularPrice = Number(document.getElementById('prodRegularPrice').value) || 0;
+      const regularPriceEl = document.getElementById('prodRegularPrice');
+      const regularPrice = regularPriceEl ? (Number(regularPriceEl.value) || 0) : 0;
       const offerPrice = Number(document.getElementById('prodOfferPrice').value) || 0;
       const duration = document.getElementById('prodDuration').value.trim();
       const inputLabel = document.getElementById('prodInputLabel').value.trim() || 'Player ID / UID';
@@ -1306,7 +1303,10 @@
       document.getElementById('prodSubcat').value = prod.subcategory || '';
       document.getElementById('prodTitle').value = prod.name || prod.title || '';
       document.getElementById('prodImage').value = prod.image || '';
-      document.getElementById('prodRegularPrice').value = prod.regularPrice || '';
+      const regPriceEl = document.getElementById('prodRegularPrice');
+      if (regPriceEl) {
+        regPriceEl.value = prod.regularPrice || '';
+      }
       document.getElementById('prodOfferPrice').value = prod.offerPrice || '';
       document.getElementById('prodDuration').value = prod.duration || '৩০ দিন';
       document.getElementById('prodInputLabel').value = prod.inputLabel || 'Player ID / UID';
