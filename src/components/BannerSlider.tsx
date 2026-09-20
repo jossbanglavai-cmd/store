@@ -32,13 +32,13 @@ export const BannerSlider: React.FC<Props> = ({ slides }) => {
   };
 
   return (
-    <div className="relative group w-full rounded-2xl overflow-hidden shadow-sm border border-gray-200/80 bg-neutral-900">
+    <div className="relative group w-full max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-md border border-gray-200/80 dark:border-gray-800 bg-neutral-900">
       {/* 
-        RESPONSIVE HEIGHT FIX:
-        Instead of aspect-ratio: 16/9 on 1920px (which became 993px tall),
-        we cap the height on desktop to max-h-[320px] and use aspect-[21/9] on wide screens.
+        PRECISE 16:9 ASPECT RATIO WITH MAX-WIDTH:
+        Keeps the aspect ratio strictly at 16:9 so the entire image is perfectly visible,
+        but limits the maximum width of the slider on desktop to keep it compact and elegant!
       */}
-      <div className="w-full aspect-[16/8] sm:aspect-[21/8] max-h-[190px] sm:max-h-[280px] md:max-h-[320px] relative overflow-hidden flex items-center justify-center">
+      <div className="w-full aspect-[16/9] relative overflow-hidden flex items-center justify-center">
         {currentSlide.link ? (
           <a 
             href={currentSlide.link} 
