@@ -13,6 +13,10 @@ export interface Product {
   description?: string;
   packages: Package[];
   categoryName?: string;
+  regularPrice?: number;
+  offerPrice?: number;
+  duration?: string;
+  subCategory?: string;
 }
 
 export interface Category {

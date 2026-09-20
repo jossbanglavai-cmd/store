@@ -89,7 +89,7 @@ export const ProductModal: React.FC<Props> = ({
           package: selectedPkg.name,
           price: selectedPkg.price,
           playerInfo,
-          status: 'Success',
+          status: 'Pending',
           method: 'Wallet Pay',
           timeString: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           timestamp: Date.now(),

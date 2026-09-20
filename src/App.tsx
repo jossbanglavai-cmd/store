@@ -49,6 +49,23 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 // Fully updated Live Sync Firebase integration for Amar Store with Web SDK support
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
+
+  // Sync favicon with settings
+  useEffect(() => {
+    if (settings.favicon) {
+      const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      if (link) {
+        link.href = settings.favicon;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.type = 'image/png';
+        newLink.href = settings.favicon;
+        document.head.appendChild(newLink);
+      }
+    }
+  }, [settings.favicon]);
+
   const [categories, setCategories] = useState<Category[]>(() => {
     try {
       const saved = localStorage.getItem('amar_store_live_categories');
