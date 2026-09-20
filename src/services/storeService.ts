@@ -895,6 +895,8 @@ export function listenToLiveReviews(onUpdate: (reviews: Review[]) => void): () =
         rating,
         comment: data.comment || "",
         status: data.status || "Approved",
+        userEmail: data.userEmail || "",
+        memberId: data.memberId || "",
         timestamp,
         dateFormatted
       });
@@ -1055,6 +1057,8 @@ export async function fetchLiveReviews(): Promise<Review[]> {
         rating,
         comment: data.comment || "",
         status: data.status || "Approved",
+        userEmail: data.userEmail || "",
+        memberId: data.memberId || "",
         timestamp,
         dateFormatted
       });
@@ -1094,6 +1098,8 @@ export function saveUserReview(review: Review): void {
       rating: review.rating || 5,
       comment: review.comment || '',
       status: review.status || 'Approved',
+      userEmail: review.userEmail || '',
+      memberId: review.memberId || '',
       timestamp: new Date().toISOString()
     }).catch(() => {});
   } catch (err) {

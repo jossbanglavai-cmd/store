@@ -638,41 +638,27 @@ export const ReviewsView: React.FC<Props> = ({
                     </div>
                     
                     <div className="grid grid-cols-1 gap-1.5">
-                      {productNames.map((name, i) => {
-                        const isAlready = userReviewedProducts.has(name.trim().toLowerCase());
+                      {availableProducts.map((name, i) => {
                         const isSelected = productName === name;
                         
                         return (
                           <div
                             key={i}
                             onClick={() => {
-                              if (!isAlready) {
-                                setProductName(name);
-                                setDuplicateError(null);
-                              }
+                              setProductName(name);
+                              setDuplicateError(null);
                             }}
-                            className={`relative px-3 py-2 rounded-xl border text-xs font-medium transition flex items-center justify-between ${
-                              isAlready
-                                ? 'bg-gray-100/50 dark:bg-gray-900/30 border-gray-200/50 dark:border-gray-800/40 text-gray-400 dark:text-gray-600 opacity-60 cursor-not-allowed'
-                                : isSelected
-                                  ? 'bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 cursor-pointer shadow-xs font-bold'
-                                  : 'bg-white dark:bg-[#16181f] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 cursor-pointer'
+                            className={`relative px-3 py-2.5 rounded-xl border text-xs font-semibold transition flex items-center justify-between ${
+                              isSelected
+                                ? 'bg-amber-500/10 border-amber-500 text-amber-600 dark:text-amber-400 cursor-pointer shadow-xs font-bold'
+                                : 'bg-white dark:bg-[#16181f] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 cursor-pointer'
                             }`}
                           >
-                            <div className="flex items-center gap-2 truncate">
-                              {isAlready && (
-                                <span className="text-red-500 text-[13px] font-bold" title="ইতিমধ্যে রিভিউ দিয়েছেন">🚫</span>
-                              )}
-                              <span className="truncate">{name}</span>
-                            </div>
+                            <span className="truncate">{name}</span>
                             
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {isAlready ? (
-                                <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-md font-bold">রিভিউড</span>
-                              ) : isSelected ? (
-                                <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[9px] scale-110">✓</span>
-                              ) : null}
-                            </div>
+                            {isSelected && (
+                              <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[9px] scale-110">✓</span>
+                            )}
                           </div>
                         );
                       })}
