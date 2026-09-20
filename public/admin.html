@@ -411,7 +411,7 @@
       <!-- STORE GENERAL SETTINGS -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
         <h2 class="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
-          <i class="fa-solid fa-gear"></i> জেনারেল সাইট সেটিংস (WhatsApp, Delivery & Notice)
+          <i class="fa-solid fa-gear"></i> জেনারেল সাইট সেটিংস (Logo, Favicon, WhatsApp & Notice)
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
           <div>
@@ -430,6 +430,16 @@
             <label class="block text-xs font-semibold text-slate-300 mb-1">সাইটের ওপরের স্ক্রলিং নোটিশ (Notice Text)</label>
             <input type="text" id="settingNoticeText" placeholder="আমাদের স্টোরে স্বাগতম! বিকাশ ও নগদে অটো পেমেন্ট রিসিভ করা হচ্ছে..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500">
           </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">সাইট লোগো / স্টোর আইকন লিঙ্ক (Brand Logo URL)</label>
+            <input type="text" id="settingStoreIconUrl" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500">
+            <p class="text-[10px] text-amber-500/80 mt-1"><i class="fa-solid fa-circle-info"></i> সঠিক সাইজ: <b>৫১২x৫১২ পিক্সেল</b> (সমকোণ/স্কয়ার transparent PNG লোগো)</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">সাইট ফেভিকন ইমেজ লিংক (Favicon URL)</label>
+            <input type="text" id="settingFaviconUrl" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500">
+            <p class="text-[10px] text-amber-500/80 mt-1"><i class="fa-solid fa-circle-info"></i> সঠিক সাইজ: <b>৩২x৩২</b> অথবা <b>৪৮x৪৮ পিক্সেল</b> (PNG / ICO ফরম্যাট)</p>
+          </div>
         </div>
         <button onclick="saveSiteGeneralSettings()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition cursor-pointer font-bold">
           <i class="fa-solid fa-save mr-1"></i> সব সেটিংস আপডেট করুন
@@ -446,6 +456,7 @@
           <div class="md:col-span-2">
             <label class="block text-xs font-medium text-slate-400 mb-1">নতুন ব্যানার ইমেজের লিংক (URL)</label>
             <input type="text" id="newBannerUrl" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500">
+            <p class="text-[10px] text-amber-500/80 mt-1"><i class="fa-solid fa-circle-info"></i> সঠিক সাইজ: <b>১৯২০x৮০০ পিক্সেল</b> অথবা <b>১২০০x৫০০ পিক্সেল</b> (১৬:৭ ল্যান্ডস্কেপ ব্যানার ইমেজ)</p>
           </div>
           <div class="flex items-end">
             <button onclick="addBannerImage()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-xl transition cursor-pointer">
@@ -1794,6 +1805,12 @@
       if (s.operatingHours !== undefined) {
         document.getElementById('settingHoursText').value = s.operatingHours;
       }
+      if (s.faviconUrl !== undefined) {
+        document.getElementById('settingFaviconUrl').value = s.faviconUrl || '';
+      }
+      if (s.storeIconUrl !== undefined) {
+        document.getElementById('settingStoreIconUrl').value = s.storeIconUrl || '';
+      }
 
       // Payments Gateways
       if (s.payments) {
@@ -1811,11 +1828,15 @@
       const delivery = document.getElementById('settingDeliveryText').value.trim();
       const hours = document.getElementById('settingHoursText').value.trim();
       const notice = document.getElementById('settingNoticeText').value.trim();
+      const favicon = document.getElementById('settingFaviconUrl').value.trim();
+      const storeIcon = document.getElementById('settingStoreIconUrl').value.trim();
 
       globalSettings.noticeText = notice;
       globalSettings.whatsappPhone = whatsapp;
       globalSettings.deliverySpeedText = delivery;
       globalSettings.operatingHours = hours;
+      globalSettings.faviconUrl = favicon;
+      globalSettings.storeIconUrl = storeIcon;
 
       if (!globalSettings.payments) globalSettings.payments = {};
       globalSettings.payments.bkash = whatsapp; // Fallback for support

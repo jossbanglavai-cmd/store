@@ -52,19 +52,20 @@ export default function App() {
 
   // Sync favicon with settings
   useEffect(() => {
-    if (settings.favicon) {
+    const favUrl = settings.faviconUrl || settings.favicon;
+    if (favUrl) {
       const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
       if (link) {
-        link.href = settings.favicon;
+        link.href = favUrl;
       } else {
         const newLink = document.createElement('link');
         newLink.rel = 'icon';
         newLink.type = 'image/png';
-        newLink.href = settings.favicon;
+        newLink.href = favUrl;
         document.head.appendChild(newLink);
       }
     }
-  }, [settings.favicon]);
+  }, [settings.favicon, settings.faviconUrl]);
 
   const [categories, setCategories] = useState<Category[]>(() => {
     try {
@@ -361,7 +362,7 @@ export default function App() {
         
         {/* Navigation */}
         <Navbar
-          logoUrl={settings.headerLogo}
+          logoUrl={settings.storeIconUrl || settings.headerLogo}
           balance={balance}
           activeTab={activeTab}
           setActiveTab={setActiveTab}

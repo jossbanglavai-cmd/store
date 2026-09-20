@@ -36,6 +36,8 @@ export interface AppSettings {
   headerLogo: string;
   noticeText: string;
   favicon?: string;
+  faviconUrl?: string;
+  storeIconUrl?: string;
   sliderData: Slide[];
   payments: {
     bkash: string;
