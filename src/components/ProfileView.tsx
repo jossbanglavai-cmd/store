@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Wallet, Store, Package, Star, CheckCircle2, Phone, Clock, ArrowRight, ShieldCheck, Sparkles, ChevronRight, LogOut, LogIn, UserPlus, Camera, Bot } from 'lucide-react';
 import { AppSettings, Order, UserProfile } from '../types';
+import { isUserAdmin } from '../services/storeService';
 
 interface Props {
   balance: number;
@@ -13,6 +14,7 @@ interface Props {
   onOpenPhotoModal?: () => void;
   onLogout: () => void;
   onNavigateTab?: (tab: 'home' | 'orders' | 'reviews') => void;
+  onOpenAdmin?: () => void;
 }
 
 export const ProfileView: React.FC<Props> = ({
@@ -26,10 +28,12 @@ export const ProfileView: React.FC<Props> = ({
   onOpenPhotoModal,
   onLogout,
   onNavigateTab,
+  onOpenAdmin,
 }) => {
   const activeHours = settings?.operatingHours || "সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)";
   const activePhone = settings?.whatsappPhone || settings?.payments?.bkash || "01770931981";
   const activeDelivery = settings?.deliverySpeedText || "স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)";
+  const isAdmin = Boolean(user.isLoggedIn && isUserAdmin(user.email));
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       
@@ -123,9 +127,16 @@ export const ProfileView: React.FC<Props> = ({
             </p>
 
             <div className="pt-2 flex flex-wrap gap-2 justify-center sm:justify-start items-center">
-              <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                Verified Account
-              </span>
+              {isAdmin ? (
+                <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                  সুপার অ্যাডমিন (Admin)
+                </span>
+              ) : (
+                <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  Verified Account
+                </span>
+              )}
             </div>
           </div>
 
@@ -135,6 +146,28 @@ export const ProfileView: React.FC<Props> = ({
           >
             <Wallet className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
             টাকা অ্যাড করুন
+          </button>
+        </div>
+      )}
+
+      {/* Admin Panel Access Banner - Strictly for trxrafiff@gmail.com */}
+      {isAdmin && onOpenAdmin && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-amber-900 dark:text-amber-300 font-bold text-sm sm:text-base">
+              <ShieldCheck className="w-5 h-5 text-amber-500" />
+              <span>অ্যাডমিন ম্যানেজমেন্ট পোর্টাল (Admin Portal)</span>
+            </div>
+            <p className="text-xs text-amber-800/80 dark:text-amber-400/80">
+              প্রোডাক্ট, ক্যাটেগরি, অর্ডার ও স্টোর সেটিংস পরিবর্তন করার সরাসরি প্রবেশাধিকার।
+            </p>
+          </div>
+          <button
+            onClick={onOpenAdmin}
+            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+          >
+            <ShieldCheck className="w-4 h-4 text-slate-950" />
+            <span>অ্যাডমিন প্যানেল ওপেন করুন</span>
           </button>
         </div>
       )}

@@ -28,6 +28,13 @@ export interface RegisteredAccount {
   photoUrl?: string;
 }
 
+export const ADMIN_EMAIL = 'trxrafiff@gmail.com';
+
+export function isUserAdmin(email?: string | null): boolean {
+  if (!email) return false;
+  return email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+}
+
 export const DEFAULT_USER: UserProfile = {
   name: "",
   phone: "",

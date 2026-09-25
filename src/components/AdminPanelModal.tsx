@@ -4,8 +4,8 @@ import {
 } from 'lucide-react';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Category, Order, Product, AppSettings } from '../types';
-import { saveLiveCategories, uploadToImgBB, parseFirestoreOrder } from '../services/storeService';
+import { Category, Order, Product, AppSettings, UserProfile } from '../types';
+import { saveLiveCategories, uploadToImgBB, parseFirestoreOrder, isUserAdmin } from '../services/storeService';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ interface AdminPanelModalProps {
   settings: AppSettings;
   onUpdateSettings: (settings: AppSettings) => void;
   standalone?: boolean;
+  user?: UserProfile;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -25,10 +26,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   settings,
   onUpdateSettings,
   standalone = false,
+  user,
 }) => {
+  const isAdmin = Boolean(user?.isLoggedIn && isUserAdmin(user?.email));
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('amar_store_admin_auth') === 'true';
+    return isAdmin || sessionStorage.getItem('amar_store_admin_auth') === 'true';
   });
+
+  useEffect(() => {
+    if (isAdmin) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('amar_store_admin_auth', 'true');
+    }
+  }, [isAdmin]);
   const [passwordInput, setPasswordInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -87,6 +98,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   }, [isOpen, standalone, isAuthenticated]);
 
   if (!isOpen && !standalone) return null;
+  // Strictly prevent normal visitors, hackers, and non-admin users from viewing any admin UI or portal
+  if (!isAdmin && !isAuthenticated) return null;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

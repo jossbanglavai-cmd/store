@@ -26,6 +26,7 @@ import {
   getUserProfile,
   saveUserProfile,
   logoutUser,
+  isUserAdmin,
   listenToLiveUser,
   listenToLiveUserOrders,
   listenToLiveCategories,
@@ -95,33 +96,6 @@ export default function App() {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [deviceMode, setDeviceMode] = useState<'responsive' | 'mobile-mock'>('responsive');
   const [noticeDismissed, setNoticeDismissed] = useState(false);
-
-  const [isAdminPage, setIsAdminPage] = useState(() => {
-    return (
-      window.location.pathname.includes('/admin') ||
-      window.location.pathname.endsWith('admin.html') ||
-      window.location.hash.includes('#admin') ||
-      window.location.hash.includes('admin')
-    );
-  });
-
-  useEffect(() => {
-    const checkPath = () => {
-      const isA = (
-        window.location.pathname.includes('/admin') ||
-        window.location.pathname.endsWith('admin.html') ||
-        window.location.hash.includes('#admin') ||
-        window.location.hash.includes('admin')
-      );
-      setIsAdminPage(isA);
-    };
-    window.addEventListener('hashchange', checkPath);
-    window.addEventListener('popstate', checkPath);
-    return () => {
-      window.removeEventListener('hashchange', checkPath);
-      window.removeEventListener('popstate', checkPath);
-    };
-  }, []);
 
   // Security: Prevent right-click and common inspection shortcuts
   useEffect(() => {
@@ -196,6 +170,36 @@ export default function App() {
       setBalance(0);
       setOrders([]);
     }
+  }, [user.isLoggedIn, user.email]);
+
+  // Secure route protection:
+  // If anyone visits /#admin or /admin:
+  // 1. Normal visitors or hackers: NO admin form or portal is shown! Silently clear hash and stay in normal store UI.
+  // 2. Only if logged in with trxrafiff@gmail.com, automatically recognize and open Admin Panel!
+  useEffect(() => {
+    const handleHashRouting = () => {
+      const isHashAdmin = window.location.hash.includes('admin') || window.location.pathname.includes('/admin');
+      if (isHashAdmin) {
+        if (user.isLoggedIn && isUserAdmin(user.email)) {
+          setIsAdminOpen(true);
+        } else {
+          // Normal visitor, hacker, or non-admin user
+          // Never display any admin login form or portal!
+          if (window.location.hash) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          setIsAdminOpen(false);
+        }
+      }
+    };
+
+    handleHashRouting();
+    window.addEventListener('hashchange', handleHashRouting);
+    window.addEventListener('popstate', handleHashRouting);
+    return () => {
+      window.removeEventListener('hashchange', handleHashRouting);
+      window.removeEventListener('popstate', handleHashRouting);
+    };
   }, [user.isLoggedIn, user.email]);
 
   // Load live data
@@ -318,7 +322,15 @@ export default function App() {
     setUser(loggedInUser);
     setBalance(getWalletBalance(loggedInUser.email));
     setOrders(getLocalOrders(loggedInUser.email));
-    showToast(`স্বাগতম, ${loggedInUser.name}! সফলভাবে লগইন হয়েছে।`);
+    if (isUserAdmin(loggedInUser.email)) {
+      showToast(`স্বাগতম অ্যাডমিন (${loggedInUser.name})! আপনার অ্যাডমিন এক্সেস সক্রিয় করা হয়েছে।`);
+      // Automatically open admin panel if #admin route was requested
+      if (window.location.hash.includes('admin') || window.location.pathname.includes('/admin')) {
+        setIsAdminOpen(true);
+      }
+    } else {
+      showToast(`স্বাগতম, ${loggedInUser.name}! সফলভাবে লগইন হয়েছে।`);
+    }
   };
 
   const handleLogout = () => {
@@ -326,6 +338,11 @@ export default function App() {
     setUser(guest);
     setBalance(0);
     setOrders([]);
+    setIsAdminOpen(false);
+    sessionStorage.removeItem('amar_store_admin_auth');
+    if (window.location.hash.includes('admin')) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
     showToast("সফলভাবে লগআউট করা হয়েছে।");
   };
 
@@ -343,22 +360,6 @@ export default function App() {
     return cat.products.length > 0;
   });
 
-  if (isAdminPage) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0f111a] text-gray-900 dark:text-gray-100 font-sans">
-        <AdminPanelModal
-          isOpen={true}
-          onClose={() => {}}
-          categories={categories}
-          onUpdateCategories={setCategories}
-          settings={settings}
-          onUpdateSettings={setSettings}
-          standalone={true}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#f4f6f9] dark:bg-[#0b0d12] text-gray-900 dark:text-gray-100 flex flex-col transition-colors duration-200">
       
@@ -374,6 +375,7 @@ export default function App() {
           onOpenAddMoney={() => setIsAddMoneyOpen(true)}
           onOpenFixModal={() => setIsFixModalOpen(true)}
           onOpenAuthModal={handleOpenAuthModal}
+          onOpenAdmin={() => setIsAdminOpen(true)}
           user={user}
           deviceMode={deviceMode}
           setDeviceMode={setDeviceMode}
@@ -602,6 +604,7 @@ export default function App() {
               onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
               onLogout={handleLogout}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenAdmin={() => setIsAdminOpen(true)}
             />
           )}
 
@@ -680,14 +683,20 @@ export default function App() {
           }}
         />
 
-        {/* Admin Panel Modal */}
+        {/* Admin Panel Modal - Exclusively gated for verified trxrafiff@gmail.com */}
         <AdminPanelModal
           isOpen={isAdminOpen}
-          onClose={() => setIsAdminOpen(false)}
+          onClose={() => {
+            setIsAdminOpen(false);
+            if (window.location.hash.includes('admin')) {
+              history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          }}
           categories={categories}
           onUpdateCategories={setCategories}
           settings={settings}
           onUpdateSettings={setSettings}
+          user={user}
         />
 
       </div>

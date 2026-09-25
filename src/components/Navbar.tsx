@@ -1,6 +1,7 @@
 import React from 'react';
 import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, ShieldCheck, Star, LogIn, Moon, Sun } from 'lucide-react';
 import { UserProfile } from '../types';
+import { isUserAdmin } from '../services/storeService';
 
 interface Props {
   logoUrl: string;
@@ -18,6 +19,7 @@ interface Props {
   isDark?: boolean;
   onToggleTheme?: () => void;
   onSetTheme?: (dark: boolean) => void;
+  onOpenAdmin?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -36,6 +38,7 @@ export const Navbar: React.FC<Props> = ({
   isDark = false,
   onToggleTheme,
   onSetTheme,
+  onOpenAdmin,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#13151b]/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-xs transition-colors duration-200">
@@ -182,6 +185,18 @@ export const Navbar: React.FC<Props> = ({
                 }`} />
               )}
               <span className="text-[11px] font-semibold leading-tight">প্রোফাইল</span>
+            </button>
+          )}
+
+          {/* Admin Panel button - Strictly visible ONLY for trxrafiff@gmail.com */}
+          {user?.isLoggedIn && isUserAdmin(user.email) && onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition flex items-center gap-1 cursor-pointer shadow-xs text-xs"
+              title="অ্যাডমিন প্যানেল ওপেন করুন"
+            >
+              <ShieldCheck className="w-4 h-4 text-slate-950" />
+              <span className="text-[11px] sm:text-xs">অ্যাডমিন</span>
             </button>
           )}
 
