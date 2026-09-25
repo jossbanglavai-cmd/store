@@ -598,21 +598,34 @@
       }
     }
 
+    let isInitialized = false;
     function checkPreviousLogin() {
-      firebase.auth().onAuthStateChanged((user) => {
-        const adminEmail = 'trxrafiff@gmail.com';
-        var profileEmail = '';
-        try {
-          var saved = localStorage.getItem('amar_store_user_profile');
-          if (saved) profileEmail = (JSON.parse(saved).email || '').trim().toLowerCase();
-        } catch(e) {}
+      const adminEmail = 'trxrafiff@gmail.com';
+      var profileEmail = '';
+      try {
+        var saved = localStorage.getItem('amar_store_user_profile');
+        if (saved) profileEmail = (JSON.parse(saved).email || '').trim().toLowerCase();
+      } catch(e) {}
 
+      if (profileEmail === adminEmail) {
+        const main = document.getElementById('adminMainContent');
+        if (main) main.classList.remove('hidden');
+        if (!isInitialized) {
+          isInitialized = true;
+          initializeAdminData();
+        }
+      }
+
+      firebase.auth().onAuthStateChanged((user) => {
         var currentEmail = (user && user.email ? user.email : profileEmail).trim().toLowerCase();
 
         if (currentEmail === adminEmail) {
           const main = document.getElementById('adminMainContent');
           if (main) main.classList.remove('hidden');
-          initializeAdminData();
+          if (!isInitialized) {
+            isInitialized = true;
+            initializeAdminData();
+          }
         } else {
           window.location.replace('/');
         }

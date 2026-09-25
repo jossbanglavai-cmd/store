@@ -175,13 +175,14 @@ export default function App() {
   // Secure route protection:
   // If anyone visits /#admin or /admin:
   // 1. Normal visitors or hackers: NO admin form or portal is shown! Silently clear hash and stay in normal store UI.
-  // 2. Only if logged in with trxrafiff@gmail.com, automatically recognize and open Admin Panel!
+  // 2. Only if logged in with trxrafiff@gmail.com, automatically recognize and open real Admin Panel (/admin.html)!
   useEffect(() => {
     const handleHashRouting = () => {
       const isHashAdmin = window.location.hash.includes('admin') || window.location.pathname.includes('/admin');
       if (isHashAdmin) {
         if (user.isLoggedIn && isUserAdmin(user.email)) {
-          setIsAdminOpen(true);
+          // Open real full admin panel!
+          window.location.href = '/admin.html';
         } else {
           // Normal visitor, hacker, or non-admin user
           // Never display any admin login form or portal!
@@ -326,7 +327,7 @@ export default function App() {
       showToast(`স্বাগতম অ্যাডমিন (${loggedInUser.name})! আপনার অ্যাডমিন এক্সেস সক্রিয় করা হয়েছে।`);
       // Automatically open admin panel if #admin route was requested
       if (window.location.hash.includes('admin') || window.location.pathname.includes('/admin')) {
-        setIsAdminOpen(true);
+        window.location.href = '/admin.html';
       }
     } else {
       showToast(`স্বাগতম, ${loggedInUser.name}! সফলভাবে লগইন হয়েছে।`);
@@ -375,7 +376,9 @@ export default function App() {
           onOpenAddMoney={() => setIsAddMoneyOpen(true)}
           onOpenFixModal={() => setIsFixModalOpen(true)}
           onOpenAuthModal={handleOpenAuthModal}
-          onOpenAdmin={() => setIsAdminOpen(true)}
+          onOpenAdmin={() => {
+            window.location.href = '/admin.html';
+          }}
           user={user}
           deviceMode={deviceMode}
           setDeviceMode={setDeviceMode}
@@ -604,7 +607,9 @@ export default function App() {
               onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
               onLogout={handleLogout}
               onNavigateTab={(tab) => setActiveTab(tab)}
-              onOpenAdmin={() => setIsAdminOpen(true)}
+              onOpenAdmin={() => {
+                window.location.href = '/admin.html';
+              }}
             />
           )}
 
