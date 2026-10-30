@@ -457,9 +457,9 @@ export async function fetchLiveSettings(): Promise<AppSettings> {
       const payments = data.payments || {};
 
       const settings: AppSettings = {
-        headerLogo: data.headerLogo || FALLBACK_SETTINGS.headerLogo,
-        storeName: data.storeName || FALLBACK_SETTINGS.storeName || "আমার স্টোর",
-        noticeText: data.noticeText !== undefined ? data.noticeText : FALLBACK_SETTINGS.noticeText,
+        headerLogo: data.headerLogo || "",
+        storeName: data.storeName || "",
+        noticeText: data.noticeText !== undefined ? data.noticeText : "",
         favicon: data.favicon || FALLBACK_SETTINGS.favicon,
         faviconUrl: data.faviconUrl || "",
         storeIconUrl: data.storeIconUrl || "",
