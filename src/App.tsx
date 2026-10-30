@@ -424,6 +424,7 @@ export default function App() {
         {/* Navigation */}
         <Navbar
           logoUrl={settings.storeIconUrl || settings.headerLogo}
+          storeName={settings.storeName || "আমার স্টোর"}
           balance={balance}
           activeTab={activeTab}
           setActiveTab={handleTabChange}
