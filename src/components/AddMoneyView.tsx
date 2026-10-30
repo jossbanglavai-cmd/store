@@ -129,7 +129,30 @@ export const AddMoneyView: React.FC<Props> = ({
             {/* Glow effects */}
             <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-
+{/* Official Number Copy Box */}
+            <div className="bg-neutral-900 text-white p-4 rounded-xl space-y-2 border border-neutral-800 shadow-2xs">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block truncate">
+                    {method === 'bkash' ? 'bKash পার্সোনাল নম্বর' : 'Nagad পার্সোনাল নম্বর'}
+                  </span>
+                  <span className="font-mono text-base sm:text-lg font-bold text-amber-400 tracking-wider block">
+                    {activeNumber}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyNumber}
+                  className="min-w-[95px] px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-xs text-white rounded-lg font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-neutral-700 shrink-0"
+                >
+                  {copiedNum ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
+                  <span className="truncate">{copiedNum ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-neutral-400 pt-2 border-t border-neutral-800/80 leading-tight">
+                • এই নম্বরে Send Money করার পর নিচের বক্সে টাকার পরিমাণ, আপনার প্রেরক নম্বর এবং TrxID লিখুন।
+              </p>
+            </div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
