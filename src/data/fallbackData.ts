@@ -1,8 +1,9 @@
 import { AppSettings, Category } from '../types';
 
 export const FALLBACK_SETTINGS: AppSettings = {
-  headerLogo: "https://i.postimg.cc/prFhjX3v/20260514-210650.png",
-  noticeText: "🌙 𝗘𝗶𝗱 𝗔𝗹-𝗔𝗱𝗵𝗮 𝗠𝘂𝗯𝗮𝗿𝗮𝗸 🔥 𝗦𝘁𝗼𝗿𝗲 𝗢𝗽𝗲𝗻 🕙 10 𝗔𝗠 - 10 𝗣𝗠",
+  headerLogo: "",
+  storeName: "",
+  noticeText: "",
   operatingHours: "সকাল ১০:০০ টা থেকে রাত ১০:০০ টা (প্রতিদিন)",
   deliverySpeedText: "স্বয়ংক্রিয় ও তাৎক্ষণিক ডেলিভারি (সাধারণত ৫ থেকে ১৫ মিনিটের মধ্যে)",
   whatsappPhone: "01770931981",
