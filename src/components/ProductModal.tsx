@@ -155,11 +155,11 @@ export const ProductModal: React.FC<Props> = ({
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
-            <div className="w-12 h-12 rounded-xl bg-white p-1.5 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-white dark:bg-neutral-800 p-0.5 ring-2 ring-amber-400/60 shadow-md flex items-center justify-center flex-shrink-0 overflow-hidden">
               <img 
                 src={product.image} 
                 alt={product.name} 
-                className="w-full h-full object-contain"
+                className="w-full h-full rounded-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg";
                 }}

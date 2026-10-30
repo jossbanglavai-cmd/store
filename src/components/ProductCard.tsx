@@ -34,19 +34,20 @@ export const ProductCard: React.FC<Props> = ({ product, onSelect }) => {
         )}
       </div>
 
-      {/* 
-        RESPONSIVE IMAGE FIX:
-        Constrained image container with clean background in both themes!
-      */}
-      <div className="w-full aspect-square max-h-[140px] sm:max-h-[160px] md:max-h-[180px] bg-gradient-to-b from-gray-50/80 to-white dark:from-[#1b1e27] dark:to-[#16181f] flex items-center justify-center p-3 sm:p-4 overflow-hidden border-b border-gray-100 dark:border-gray-800/80">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg";
-          }}
-        />
+      {/* Circular Product Image */}
+      <div className="pt-5 pb-3 px-3 flex items-center justify-center">
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full p-1 bg-gradient-to-tr from-amber-400/40 via-yellow-500/20 to-orange-500/40 dark:from-amber-400/30 dark:via-yellow-500/10 dark:to-orange-500/30 shadow-md group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+          <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-[#181a22] ring-2 ring-white/80 dark:ring-gray-800 flex items-center justify-center shadow-inner">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full rounded-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg";
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Content */}

@@ -797,15 +797,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           </label>
                           <div className="flex items-center gap-3">
                             {productForm.image ? (
-                              <div className="w-12 h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                              <div className="w-12 h-12 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 ring-2 ring-amber-400/50">
                                 <img 
                                   src={productForm.image} 
                                   alt="Preview" 
-                                  className="w-full h-full object-contain" 
+                                  className="w-full h-full rounded-full object-cover" 
                                 />
                               </div>
                             ) : (
-                              <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-[9px] text-gray-400 font-bold flex-shrink-0">
+                              <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center text-[9px] text-gray-400 font-bold flex-shrink-0">
                                 NO PNG
                               </div>
                             )}
@@ -1045,11 +1045,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             {cat.products.map((prod, prodIdx) => (
                               <div key={prodIdx} className="bg-gray-50/80 dark:bg-[#14151b] p-3 rounded-xl border border-gray-150 dark:border-gray-850 flex items-center justify-between gap-3 hover:border-blue-500/20 dark:hover:border-blue-500/10 transition">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                  <div className="w-11 h-11 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                                  <div className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex-shrink-0 flex items-center justify-center p-0.5 ring-2 ring-amber-400/40">
                                     <img 
                                       src={prod.image} 
                                       alt={prod.name} 
-                                      className="w-full h-full object-contain"
+                                      className="w-full h-full rounded-full object-cover"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg";
                                       }}
