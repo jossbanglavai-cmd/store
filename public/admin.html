@@ -1842,6 +1842,7 @@
     }
 
     async function saveSiteGeneralSettings() {
+      const storeName = (document.getElementById('settingStoreName')?.value || '').trim();
       const whatsapp = document.getElementById('settingWhatsappNum').value.trim();
       const delivery = document.getElementById('settingDeliveryText').value.trim();
       const hours = document.getElementById('settingHoursText').value.trim();
@@ -1849,6 +1850,7 @@
       const favicon = document.getElementById('settingFaviconUrl').value.trim();
       const storeIcon = document.getElementById('settingStoreIconUrl').value.trim();
 
+      globalSettings.storeName = storeName || 'আমার স্টোর';
       globalSettings.noticeText = notice;
       globalSettings.whatsappPhone = whatsapp;
       globalSettings.deliverySpeedText = delivery;
@@ -1857,7 +1859,7 @@
       globalSettings.storeIconUrl = storeIcon;
 
       if (!globalSettings.payments) globalSettings.payments = {};
-      globalSettings.payments.bkash = whatsapp; // Fallback for support
+      globalSettings.payments.bkash = whatsapp;
 
       await syncSettingsToFirestore();
       showToast('সব সাইট সেটিংস সফলভাবে সেভ হয়েছে!');
