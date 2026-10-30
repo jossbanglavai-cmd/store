@@ -1,10 +1,11 @@
 import React from 'react';
-import { Wallet, ShoppingBag, Store, Package, User, HelpCircle, ShieldCheck, Star, LogIn, Moon, Sun } from 'lucide-react';
+import { Wallet, Store, Package, User, ShieldCheck, Star, LogIn, Moon, Sun } from 'lucide-react';
 import { UserProfile } from '../types';
 import { isUserAdmin } from '../services/storeService';
 
 interface Props {
   logoUrl: string;
+  storeName?: string;
   balance: number;
   activeTab: 'home' | 'orders' | 'reviews' | 'profile';
   setActiveTab: (tab: 'home' | 'orders' | 'reviews' | 'profile') => void;
@@ -24,6 +25,7 @@ interface Props {
 
 export const Navbar: React.FC<Props> = ({
   logoUrl,
+  storeName,
   balance,
   activeTab,
   setActiveTab,
@@ -44,27 +46,38 @@ export const Navbar: React.FC<Props> = ({
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#13151b]/95 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-800 shadow-xs transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
         
-        {/* Logo */}
+        {/* Brand Logo & Name */}
         <div className="flex items-center gap-3">
           <div 
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-2 cursor-pointer transition hover:opacity-90 flex-shrink-0"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group flex-shrink-0 select-none py-1"
+            title={storeName || "আমার স্টোর"}
           >
-            <img 
-              src={logoUrl || "https://i.postimg.cc/prFhjX3v/20260514-210650.png"} 
-              alt="Amar Store" 
-              className="h-9 sm:h-11 max-w-[130px] sm:max-w-[170px] object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://i.postimg.cc/prFhjX3v/20260514-210650.png";
-              }}
-            />
+            {/* Clean Logo Box (No borders, no glow layers) */}
+            <div className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
+              <img 
+                src={logoUrl || "https://i.postimg.cc/prFhjX3v/20260514-210650.png"} 
+                alt={storeName || "আমার স্টোর"} 
+                className="w-full h-full object-contain filter drop-shadow-xs"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://i.postimg.cc/prFhjX3v/20260514-210650.png";
+                }}
+              />
+            </div>
+
+            {/* Brand Name Text (Bengali) */}
+            <div className="flex flex-col justify-center">
+              <span className="font-extrabold text-base sm:text-xl text-gray-900 dark:text-white tracking-tight leading-tight transition-colors">
+                {storeName || "আমার স্টোর"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Desktop Nav Links with Icon on Top and Name Below */}
+        {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-1.5 bg-gray-100/90 dark:bg-gray-800/80 p-1.5 rounded-2xl border border-gray-200/60 dark:border-gray-700/60">
           
-          {/* 1 Single Theme Toggle Button (Before Store) */}
+          {/* Theme Toggle Button */}
           <button
             type="button"
             onClick={onToggleTheme}
@@ -134,7 +147,7 @@ export const Navbar: React.FC<Props> = ({
         {/* Right Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
 
-          {/* Wallet Balance Pill - Only shown when logged in */}
+          {/* Wallet Balance */}
           {user?.isLoggedIn && (
             <button
               onClick={onOpenAddMoney}
@@ -147,7 +160,7 @@ export const Navbar: React.FC<Props> = ({
             </button>
           )}
 
-          {/* Profile or Login Tab beside balance */}
+          {/* Profile / Login */}
           {user && !user.isLoggedIn ? (
             <button
               onClick={() => onOpenAuthModal ? onOpenAuthModal('login') : setActiveTab('profile')}
@@ -188,7 +201,7 @@ export const Navbar: React.FC<Props> = ({
             </button>
           )}
 
-          {/* Admin Panel button - Strictly visible ONLY for trxrafiff@gmail.com */}
+          {/* Admin Panel button */}
           {user?.isLoggedIn && isUserAdmin(user.email) && onOpenAdmin && (
             <button
               onClick={onOpenAdmin}
