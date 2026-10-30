@@ -36,7 +36,7 @@ import {
 import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
 import { ProductCard } from './components/ProductCard';
-import { ProductModal } from './components/ProductModal';
+import { ProductDetailView } from './components/ProductDetailView';
 import { AddMoneyModal } from './components/AddMoneyModal';
 import { OrdersView } from './components/OrdersView';
 import { ProfileView } from './components/ProfileView';
@@ -303,6 +303,48 @@ export default function App() {
     } else {
       showToast(`অর্ডার প্লেস করা হয়েছে! খুব দ্রুত ভেরিফাই করে সম্পন্ন করা হবে।`);
     }
+
+    // Return from product view directly to orders view to see status
+    setSelectedProduct(null);
+    setActiveTab('orders');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Browser back navigation support for dedicated product page
+  useEffect(() => {
+    const handlePopState = () => {
+      if (selectedProduct) {
+        setSelectedProduct(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedProduct]);
+
+  const handleSelectProduct = (prod: Product) => {
+    setSelectedProduct(prod);
+    try {
+      window.history.pushState({ product: prod.name }, '', '#product');
+    } catch {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackFromProduct = () => {
+    setSelectedProduct(null);
+    if (window.location.hash.includes('product')) {
+      try {
+        window.history.back();
+      } catch {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabChange = (tab: 'home' | 'orders' | 'reviews' | 'profile') => {
+    setSelectedProduct(null);
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddMoneySuccess = (amount: number, reqId?: string) => {
@@ -372,7 +414,7 @@ export default function App() {
           logoUrl={settings.storeIconUrl || settings.headerLogo}
           balance={balance}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabChange}
           onOpenAddMoney={() => setIsAddMoneyOpen(true)}
           onOpenFixModal={() => setIsFixModalOpen(true)}
           onOpenAuthModal={handleOpenAuthModal}
@@ -400,8 +442,30 @@ export default function App() {
         {/* Main Content Area */}
         <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 space-y-5">
           
-          {activeTab === 'home' && (
+          {selectedProduct ? (
+            <ProductDetailView
+              product={selectedProduct}
+              onBack={handleBackFromProduct}
+              settings={settings}
+              userBalance={balance}
+              user={user}
+              onRequireLogin={() => handleOpenAuthModal('login')}
+              onOrderPlaced={handleOrderPlaced}
+              onViewReviews={() => {
+                setSelectedProduct(null);
+                setActiveTab('reviews');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onSelectRelatedProduct={handleSelectProduct}
+              relatedProducts={categories
+                .flatMap(c => c.products)
+                .filter(p => p.name !== selectedProduct.name)}
+              onOpenAddMoney={() => setIsAddMoneyOpen(true)}
+            />
+          ) : (
             <>
+              {activeTab === 'home' && (
+                <div className="space-y-5">
               {/* Notice Bar */}
               {!noticeDismissed && settings.noticeText && (
                 <div className="bg-black dark:bg-gray-800 text-white px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-3 text-xs sm:text-sm shadow-xs animate-in fade-in border border-transparent dark:border-gray-700">
@@ -559,7 +623,7 @@ export default function App() {
                           <ProductCard
                             key={prodIdx}
                             product={prod}
-                            onSelect={(p) => setSelectedProduct(p)}
+                            onSelect={(p) => handleSelectProduct(p)}
                           />
                         ))}
                       </div>
@@ -569,7 +633,7 @@ export default function App() {
                 </div>
               )}
 
-            </>
+            </div>
           )}
 
           {/* Orders View */}
@@ -606,11 +670,14 @@ export default function App() {
               onOpenAuthModal={handleOpenAuthModal}
               onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
               onLogout={handleLogout}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigateTab={(tab) => handleTabChange(tab)}
               onOpenAdmin={() => {
                 window.location.href = '/admin.html';
               }}
             />
+          )}
+
+            </>
           )}
 
         </main>
@@ -618,7 +685,7 @@ export default function App() {
         {/* Mobile Bottom Navigation */}
         <BottomNav
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabChange}
           reviewsCount={reviews.length}
           user={user}
           onOpenAuthModal={handleOpenAuthModal}
@@ -641,17 +708,6 @@ export default function App() {
         </button>
 
         {/* Modals */}
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          settings={settings}
-          userBalance={balance}
-          user={user}
-          onRequireLogin={() => handleOpenAuthModal('login')}
-          onOrderPlaced={handleOrderPlaced}
-          onViewReviews={() => setActiveTab('reviews')}
-        />
-
         <AddMoneyModal
           isOpen={isAddMoneyOpen}
           onClose={() => setIsAddMoneyOpen(false)}
