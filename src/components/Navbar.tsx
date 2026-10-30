@@ -51,26 +51,27 @@ export const Navbar: React.FC<Props> = ({
           <div 
             onClick={() => setActiveTab('home')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group flex-shrink-0 select-none py-1"
-            title={storeName || "আমার স্টোর"}
+            title={storeName || ""}
           >
             {/* Clean Logo Box (No borders, no glow layers) */}
-            <div className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
-              <img 
-                src={logoUrl || "https://i.postimg.cc/prFhjX3v/20260514-210650.png"} 
-                alt={storeName || "আমার স্টোর"} 
-                className="w-full h-full object-contain filter drop-shadow-xs"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://i.postimg.cc/prFhjX3v/20260514-210650.png";
-                }}
-              />
-            </div>
+            {logoUrl && (
+              <div className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
+                <img 
+                  src={logoUrl} 
+                  alt={storeName || ""} 
+                  className="w-full h-full object-contain filter drop-shadow-xs"
+                />
+              </div>
+            )}
 
             {/* Brand Name Text (Bengali) */}
-            <div className="flex flex-col justify-center">
-              <span className="font-extrabold text-base sm:text-xl text-gray-900 dark:text-white tracking-tight leading-tight transition-colors">
-                {storeName || "আমার স্টোর"}
-              </span>
-            </div>
+            {storeName && (
+              <div className="flex flex-col justify-center">
+                <span className="font-extrabold text-base sm:text-xl text-gray-900 dark:text-white tracking-tight leading-tight transition-colors">
+                  {storeName}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
