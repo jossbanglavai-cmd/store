@@ -652,62 +652,6 @@ export const ProductDetailView: React.FC<Props> = ({
 
       </div>
 
-      {/* Related Products Section */}
-      {relatedProducts.length > 0 && (
-        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-4 rounded-full bg-amber-400" />
-              <h3 className="text-base sm:text-lg font-bold font-heading text-gray-900 dark:text-white">
-                অন্যান্য আকর্ষণীয় পণ্যসমূহ
-              </h3>
-            </div>
-            <button
-              onClick={onBack}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold"
-            >
-              সবগুলো দেখুন →
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3.5">
-            {relatedProducts.slice(0, 6).map((relProd, idx) => {
-              const startPrice = relProd.packages && relProd.packages.length > 0 
-                ? Math.min(...relProd.packages.map(p => p.price)) 
-                : 100;
-              return (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    if (onSelectRelatedProduct) {
-                      onSelectRelatedProduct(relProd);
-                    }
-                  }}
-                  className="bg-white dark:bg-[#16181f] p-2.5 sm:p-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-center cursor-pointer hover:border-black dark:hover:border-white hover:shadow-md transition group"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full bg-white dark:bg-neutral-800 p-1 ring-2 ring-amber-400/50 shadow-sm overflow-hidden mb-2 group-hover:scale-105 transition">
-                    <img
-                      src={relProd.image}
-                      alt={relProd.name}
-                      className="w-full h-full rounded-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://i.postimg.cc/LX3B21bG/20260515-103423.jpg";
-                      }}
-                    />
-                  </div>
-                  <div className="font-bold text-xs text-gray-900 dark:text-white truncate">
-                    {relProd.name}
-                  </div>
-                  <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
-                    ৳{startPrice}+
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
