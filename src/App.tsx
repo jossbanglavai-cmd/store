@@ -37,7 +37,7 @@ import { Navbar } from './components/Navbar';
 import { BannerSlider } from './components/BannerSlider';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailView } from './components/ProductDetailView';
-import { AddMoneyModal } from './components/AddMoneyModal';
+import { AddMoneyView } from './components/AddMoneyView';
 import { OrdersView } from './components/OrdersView';
 import { ProfileView } from './components/ProfileView';
 import { ReviewsView } from './components/ReviewsView';
@@ -341,8 +341,20 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenAddMoney = () => {
+    setSelectedProduct(null);
+    setIsAddMoneyOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackFromAddMoney = () => {
+    setIsAddMoneyOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleTabChange = (tab: 'home' | 'orders' | 'reviews' | 'profile') => {
     setSelectedProduct(null);
+    setIsAddMoneyOpen(false);
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -415,7 +427,7 @@ export default function App() {
           balance={balance}
           activeTab={activeTab}
           setActiveTab={handleTabChange}
-          onOpenAddMoney={() => setIsAddMoneyOpen(true)}
+          onOpenAddMoney={handleOpenAddMoney}
           onOpenFixModal={() => setIsFixModalOpen(true)}
           onOpenAuthModal={handleOpenAuthModal}
           onOpenAdmin={() => {
@@ -442,7 +454,19 @@ export default function App() {
         {/* Main Content Area */}
         <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 space-y-5">
           
-          {selectedProduct ? (
+          {isAddMoneyOpen ? (
+            <AddMoneyView
+              onBack={handleBackFromAddMoney}
+              settings={settings}
+              user={user}
+              userBalance={balance}
+              onRequireLogin={() => handleOpenAuthModal('login')}
+              onAddMoneySuccess={(amount, reqId) => {
+                handleAddMoneySuccess(amount, reqId);
+                handleBackFromAddMoney();
+              }}
+            />
+          ) : selectedProduct ? (
             <ProductDetailView
               product={selectedProduct}
               onBack={handleBackFromProduct}
@@ -460,7 +484,7 @@ export default function App() {
               relatedProducts={categories
                 .flatMap(c => c.products)
                 .filter(p => p.name !== selectedProduct.name)}
-              onOpenAddMoney={() => setIsAddMoneyOpen(true)}
+              onOpenAddMoney={handleOpenAddMoney}
             />
           ) : (
             <>
@@ -665,7 +689,7 @@ export default function App() {
               orders={orders}
               user={user}
               settings={settings}
-              onOpenAddMoney={() => setIsAddMoneyOpen(true)}
+              onOpenAddMoney={handleOpenAddMoney}
               onOpenFixModal={() => setIsFixModalOpen(true)}
               onOpenAuthModal={handleOpenAuthModal}
               onOpenPhotoModal={() => setIsPhotoModalOpen(true)}
@@ -708,21 +732,12 @@ export default function App() {
         </button>
 
         {/* Modals */}
-        <AddMoneyModal
-          isOpen={isAddMoneyOpen}
-          onClose={() => setIsAddMoneyOpen(false)}
-          settings={settings}
-          user={user}
-          onRequireLogin={() => handleOpenAuthModal('login')}
-          onAddMoneySuccess={handleAddMoneySuccess}
-        />
-
         <AiSupportModal
           isOpen={isFixModalOpen}
           onClose={() => setIsFixModalOpen(false)}
           reviewsCount={reviews.length}
           settings={settings}
-          onOpenAddMoney={() => setIsAddMoneyOpen(true)}
+          onOpenAddMoney={handleOpenAddMoney}
         />
 
         {/* Authentication Modal (Login & Registration) */}
