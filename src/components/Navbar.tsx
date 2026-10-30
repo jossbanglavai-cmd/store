@@ -139,7 +139,11 @@ export const Navbar: React.FC<Props> = ({
             }`}
           >
             <div className="relative">
-              <Star className="w-5 h-5 mb-0.5 fill-amber-400 text-amber-400" />
+              <Star className={`w-5 h-5 mb-0.5 ${
+  activeTab === 'reviews' 
+    ? 'fill-amber-400 text-amber-500' 
+    : 'text-gray-500 dark:text-gray-400'
+}`} />
             </div>
             <span className="text-[11px] leading-tight">রিভিউ</span>
           </button>
