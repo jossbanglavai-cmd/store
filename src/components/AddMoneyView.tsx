@@ -279,13 +279,7 @@ export const AddMoneyView: React.FC<Props> = ({
             )}
 
             {/* Step 1: Select Method (bKash / Nagad) */}
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs">১</span>
-                <span>পেমেন্ট মাধ্যম বেছে নিন (bKash / Nagad)</span>
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -326,7 +320,31 @@ export const AddMoneyView: React.FC<Props> = ({
                   <span>Nagad Personal</span>
                 </button>
               </div>
-            </div>
+
+              {/* Official Number Copy Box (Now placed directly under bKash & Nagad buttons) */}
+              <div className="bg-neutral-900 text-white p-4 rounded-xl space-y-2 border border-neutral-800 shadow-2xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block truncate">
+                      {method === 'bkash' ? 'bKash Personal Send Money নম্বর' : 'Nagad Personal Send Money নম্বর'}
+                    </span>
+                    <span className="font-mono text-base sm:text-lg font-bold text-amber-400 tracking-wider block">
+                      {activeNumber}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyNumber}
+                    className="min-w-[96px] h-9 px-3 bg-neutral-800 hover:bg-neutral-700 text-xs text-white rounded-lg font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-neutral-700 shrink-0"
+                  >
+                    {copiedNum ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
+                    <span className="shrink-0">{copiedNum ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-neutral-400 pt-1 border-t border-neutral-800/80">
+                  • এই নম্বরে Send Money করার পর নিচের বক্সে টাকার পরিমাণ, আপনার প্রেরক নম্বর এবং TrxID লিখুন।
+                </p>
+              </div>
             
             {/* Step 2: Amount with Quick Chips */}
             <div className="space-y-2">
