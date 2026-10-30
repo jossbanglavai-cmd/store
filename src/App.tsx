@@ -54,10 +54,7 @@ export default function App() {
   // Sync favicon with settings
   useEffect(() => {
     let favUrl = settings.faviconUrl || settings.favicon || settings.storeIconUrl || settings.headerLogo;
-    if (!favUrl || favUrl === '/favicon.png' || favUrl === 'favicon.png') {
-      favUrl = 'https://i.postimg.cc/prFhjX3v/20260514-210650.png';
-    }
-    if (favUrl) {
+    if (favUrl && favUrl !== '/favicon.png' && favUrl !== 'favicon.png') {
       const links = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
       if (links.length > 0) {
         links.forEach(link => {
