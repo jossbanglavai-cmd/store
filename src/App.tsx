@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Search, 
   Sparkles, 
@@ -46,7 +46,19 @@ import { BottomNav } from './components/BottomNav';
 import { AuthModal } from './components/AuthModal';
 import { ProfilePhotoModal } from './components/ProfilePhotoModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
+type TabType = 'home' | 'orders' | 'reviews' | 'profile';
 
+const TAB_TO_PATH: Record<TabType, string> = {
+  home: '/',
+  orders: '/orders',
+  reviews: '/reviews',
+  profile: '/profile',
+};
+
+function normalizePath(raw: string): string {
+  const clean = raw.split('?')[0].split('#')[0].replace(/\/+$/, '');
+  return clean === '' ? '/' : clean;
+}
 // Fully updated Live Sync Firebase integration for Amar Store with Web SDK support
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(FALLBACK_SETTINGS);
@@ -302,64 +314,145 @@ export default function App() {
     }
 
     // Return from product view directly to orders view to see status
-    setSelectedProduct(null);
-    setActiveTab('orders');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo('/orders');
   };
 
-  // Browser back navigation support for dedicated product page
-  useEffect(() => {
-    const handlePopState = () => {
-      if (selectedProduct) {
-        setSelectedProduct(null);
+  const categoriesRef = useRef(categories);
+  const isLoggedInRef = useRef(user.isLoggedIn);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  useEffect(() => { isLoggedInRef.current = user.isLoggedIn; }, [user.isLoggedIn]);
+
+  const syncStateWithPath = useCallback((rawPath: string, historyState?: any) => {
+    const path = normalizePath(rawPath);
+    const lower = path.toLowerCase();
+    const loggedIn = isLoggedInRef.current;
+
+    // লগইন না থাকলে /orders, /profile, /wallet কাজ করবে না -> হোমে (/) নিয়ে আসবে
+    if ((lower === '/orders' || lower === '/profile' || lower === '/wallet') && !loggedIn) {
+      if (normalizePath(window.location.pathname) !== '/') {
+        window.history.replaceState({ path: '/' }, '', '/');
       }
+      setSelectedProduct(null);
+      setIsAddMoneyOpen(false);
+      setActiveTab('home');
+      return;
+    }
+
+    if (lower === '/wallet') {
+      setSelectedProduct(null);
+      setIsAddMoneyOpen(true);
+      return;
+    }
+
+    // /product শুধুমাত্র কোনো প্রোডাক্টে ক্লিক করলে কাজ করবে
+    if (lower === '/product' || lower === '/products') {
+      const clickedName = historyState?.productName;
+      if (lower === '/product' && clickedName) {
+        const found = categoriesRef.current.flatMap((c) => c.products).find((p) => p.name === clickedName);
+        if (found) {
+          setIsAddMoneyOpen(false);
+          setSelectedProduct(found);
+          return;
+        }
+      }
+      // সরাসরি ব্রাউজারে /product বা /products লিখলে হোমে (/) নিয়ে আসবে
+      window.history.replaceState({ path: '/' }, '', '/');
+      setSelectedProduct(null);
+      setIsAddMoneyOpen(false);
+      setActiveTab('home');
+      return;
+    }
+
+    setSelectedProduct(null);
+    setIsAddMoneyOpen(false);
+
+    if (lower === '/orders') setActiveTab('orders');
+    else if (lower === '/reviews') setActiveTab('reviews');
+    else if (lower === '/profile') setActiveTab('profile');
+    else {
+      if (lower !== '/' && !lower.startsWith('/admin')) {
+        window.history.replaceState({ path: '/' }, '', '/');
+      }
+      setActiveTab('home');
+    }
+  }, []);
+
+  const navigateTo = useCallback((targetPath: string, options?: { replace?: boolean }) => {
+    const target = normalizePath(targetPath);
+    const lower = target.toLowerCase();
+
+    if ((lower === '/orders' || lower === '/profile' || lower === '/wallet') && !isLoggedInRef.current) {
+      if (normalizePath(window.location.pathname) !== '/') {
+        window.history.replaceState({ path: '/' }, '', '/');
+      }
+      syncStateWithPath('/');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (normalizePath(window.location.pathname) !== target) {
+      if (options?.replace) window.history.replaceState({ path: target }, '', target);
+      else window.history.pushState({ path: target }, '', target);
+    }
+
+    syncStateWithPath(target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [syncStateWithPath]);
+
+  useEffect(() => {
+    const initialLower = normalizePath(window.location.pathname).toLowerCase();
+    if (initialLower === '/product' || initialLower === '/products') {
+      window.history.replaceState({ path: '/' }, '', '/');
+      syncStateWithPath('/');
+    } else {
+      syncStateWithPath(window.location.pathname);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      syncStateWithPath(window.location.pathname, event.state);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [selectedProduct]);
+  }, [syncStateWithPath]);
 
   const handleSelectProduct = (prod: Product) => {
+    setIsAddMoneyOpen(false);
     setSelectedProduct(prod);
     try {
-      window.history.pushState({ product: prod.name }, '', '#product');
+      window.history.pushState({ path: '/product', productName: prod.name }, '', '/product');
     } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackFromProduct = () => {
-    setSelectedProduct(null);
-    if (window.location.hash.includes('product')) {
-      try {
-        window.history.back();
-      } catch {
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
+    if (window.history.length > 1 && normalizePath(window.location.pathname).toLowerCase() === '/product') {
+      window.history.back();
+    } else {
+      navigateTo('/', { replace: true });
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenAddMoney = () => {
-    setSelectedProduct(null);
-    setIsAddMoneyOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo('/wallet');
   };
 
   const handleBackFromAddMoney = () => {
-    setIsAddMoneyOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.history.length > 1 && normalizePath(window.location.pathname).toLowerCase() === '/wallet') {
+      window.history.back();
+    } else {
+      navigateTo('/', { replace: true });
+    }
   };
 
-  const handleTabChange = (tab: 'home' | 'orders' | 'reviews' | 'profile') => {
-    setSelectedProduct(null);
-    setIsAddMoneyOpen(false);
-    setActiveTab(tab);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleTabChange = (tab: TabType) => {
+    navigateTo(TAB_TO_PATH[tab]);
   };
 
   const handleAddMoneySuccess = (amount: number, reqId?: string) => {
     if (!user.isLoggedIn || !user.email) return;
 
-    // Refresh orders so the pending deposit appears in the order history
     setOrders(getLocalOrders(user.email));
     showToast(`৳${amount} টাকা অ্যাড করার রিকোয়েস্ট সাবমিট হয়েছে! অ্যাডমিন অনুমোদন করলেই ব্যালেন্স যোগ হবে।`);
   };
@@ -372,11 +465,11 @@ export default function App() {
   const handleLoginSuccess = (loggedInUser: UserProfile) => {
     saveUserProfile(loggedInUser);
     setUser(loggedInUser);
+    isLoggedInRef.current = loggedInUser.isLoggedIn;
     setBalance(getWalletBalance(loggedInUser.email));
     setOrders(getLocalOrders(loggedInUser.email));
     if (isUserAdmin(loggedInUser.email)) {
       showToast(`স্বাগতম অ্যাডমিন (${loggedInUser.name})! আপনার অ্যাডমিন এক্সেস সক্রিয় করা হয়েছে।`);
-      // Automatically open admin panel if #admin route was requested
       if (window.location.hash.includes('admin') || window.location.pathname.includes('/admin')) {
         window.location.href = '/admin.html';
       }
@@ -388,11 +481,15 @@ export default function App() {
   const handleLogout = () => {
     const guest = logoutUser();
     setUser(guest);
+    isLoggedInRef.current = false;
     setBalance(0);
     setOrders([]);
     setIsAdminOpen(false);
     sessionStorage.removeItem('amar_store_admin_auth');
-    if (window.location.hash.includes('admin')) {
+    const currentPath = normalizePath(window.location.pathname).toLowerCase();
+    if (currentPath === '/orders' || currentPath === '/profile' || currentPath === '/wallet') {
+      navigateTo('/', { replace: true });
+    } else if (window.location.hash.includes('admin')) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
     showToast("সফলভাবে লগআউট করা হয়েছে।");
@@ -452,7 +549,7 @@ export default function App() {
         {/* Main Content Area */}
         <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 space-y-5">
           
-          {isAddMoneyOpen ? (
+          {isAddMoneyOpen && user.isLoggedIn ? (
             <AddMoneyView
               onBack={handleBackFromAddMoney}
               settings={settings}
@@ -473,11 +570,7 @@ export default function App() {
               user={user}
               onRequireLogin={() => handleOpenAuthModal('login')}
               onOrderPlaced={handleOrderPlaced}
-              onViewReviews={() => {
-                setSelectedProduct(null);
-                setActiveTab('reviews');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onViewReviews={() => navigateTo('/reviews')}
               onSelectRelatedProduct={handleSelectProduct}
               relatedProducts={categories
                 .flatMap(c => c.products)
@@ -512,7 +605,7 @@ export default function App() {
 
               {/* Customer Reviews Spotlight Strip */}
               <div 
-                onClick={() => setActiveTab('reviews')}
+                onClick={() => navigateTo('/reviews')}
                 className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/90 dark:border-amber-700/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 dark:hover:border-amber-500 transition group shadow-2xs"
               >
                 <div className="flex items-center gap-2.5">
@@ -659,12 +752,12 @@ export default function App() {
           )}
 
           {/* Orders View */}
-          {activeTab === 'orders' && (
+          {activeTab === 'orders' && user.isLoggedIn && (
             <OrdersView
               orders={orders}
               user={user}
               onOpenAuthModal={handleOpenAuthModal}
-              onBackToHome={() => setActiveTab('home')}
+              onBackToHome={() => navigateTo('/')}
             />
           )}
 
@@ -673,7 +766,7 @@ export default function App() {
             <ReviewsView
               reviews={reviews}
               onAddReview={handleAddReview}
-              onBackToHome={() => setActiveTab('home')}
+              onBackToHome={() => navigateTo('/')}
               productNames={Array.from(new Set(categories.flatMap(c => c.products.map(p => p.name))))}
               user={user}
               onOpenAuthModal={handleOpenAuthModal}
@@ -681,7 +774,7 @@ export default function App() {
           )}
 
           {/* Profile View */}
-          {activeTab === 'profile' && (
+          {activeTab === 'profile' && user.isLoggedIn && (
             <ProfileView
               balance={balance}
               orders={orders}
